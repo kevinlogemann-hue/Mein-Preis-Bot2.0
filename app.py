@@ -39,7 +39,8 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --- SEITENLEISTE ---
-with st.sidebar:
+with st.markdown('<h2 style="color: #00f2ff; text-shadow: 0 0 10px #00f2ff; font-family: monospace;">⚡ SPAR-COCKPIT</h2>', unsafe_allow_html=True)
+
     st.image("https://img.icons8.com/clouds/200/flash-light.png", width=120)
     st.title("Spar-Cockpit")
     plz = st.text_input("📍 PLZ:", value="26639")
