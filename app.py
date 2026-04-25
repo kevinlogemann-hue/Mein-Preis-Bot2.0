@@ -41,7 +41,7 @@ st.markdown("""
 # --- SEITENLEISTE ---
 with st.sidebar:
     st.image("https://img.icons8.com/clouds/200/flash-light.png", width=120)
-    st.title("STEUERZENTRALE")
+    st.title("Spar-Cockpit")
     plz = st.text_input("📍 PLZ:", value="26639")
     
     st.header("🛒 SHOP-LISTE")
