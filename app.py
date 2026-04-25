@@ -7,29 +7,38 @@ st.title("💰 Preis-Profi AI")
 st.markdown("---")
 
 # Suchfeld
-query = st.text_input("Was möchtest du heute günstig finden?", placeholder="z.B. iPhone 15, Kaffeemaschine...")
+query = st.text_input("Was suchst du heute?", placeholder="z.B. Butter, Akkuschrauber, Fernseher...")
 
 if query:
     st.subheader(f"Ergebnisse für '{query}'")
     
-    col1, col2 = st.columns(2)
+    # Drei Spalten für verschiedene Such-Typen
+    col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.info("🔍 Preisvergleich")
-        # Direkter Link zu Idealo
+        st.info("🌐 Online")
         idealo_url = f"https://www.idealo.de/preisvergleich/MainSearchProductCategory.html?q={query.replace(' ', '+')}"
-        st.markdown(f"[👉 Beste Preise auf Idealo]({idealo_url})")
+        st.markdown(f"[Idealo Preischeck]({idealo_url})")
         
     with col2:
-        st.success("🛒 Direkt-Angebote")
-        # Direkter Link zu Google Shopping
+        st.success("🛒 Shopping")
         google_url = f"https://www.google.com/search?tbm=shop&q={query.replace(' ', '+')}"
-        st.markdown(f"[👉 Angebote bei Google Shopping]({google_url})")
+        st.markdown(f"[Google Angebote]({google_url})")
+
+    with col3:
+        st.warning("🏠 Lokal")
+        # Suche in Prospekten (Kaufda)
+        kaufda_url = f"https://www.kaufda.de/suche/{query.replace(' ', '%20')}"
+        st.markdown(f"[Prospekt-Check]({kaufda_url})")
 
     st.markdown("---")
-    st.write("💡 *Tipp: Klicke auf die Links oben, um die tagesaktuellen Bestpreise der größten Händler zu sehen.*")
+    
+    # Interaktive Karte für Läden in der Nähe
+    st.write("📍 **Läden in deiner Umgebung:**")
+    maps_url = f"https://www.google.com/maps/search/{query.replace(' ', '+')}+in+der+Nähe"
+    st.markdown(f"[Auf Google Maps anzeigen]({maps_url})")
 
-# Einkaufsliste in der Seitenleiste
+# Einkaufsliste bleibt erhalten
 with st.sidebar:
     st.header("📋 Meine Liste")
     item = st.text_input("Artikel merken:")
