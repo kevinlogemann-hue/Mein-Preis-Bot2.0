@@ -1,101 +1,141 @@
 import streamlit as st
 import random
 
-# --- KONFIGURATION ---
+# --- KONFIGURATION (Lidl Farben) ---
 st.set_page_config(
-    page_title="PREIS-PROFI AI 2.0",
-    page_icon="⚡",
+    page_title="DEIN PREIS-PLUS",
+    page_icon="💙",
     layout="centered"
 )
 
-# --- HYPER-STYLING ---
+# --- LIDL-STYLE CSS ---
 st.markdown("""
 <style>
+    /* Hintergrund in hellem Lidl-Grau/Blau */
     .stApp {
-        background: linear-gradient(270deg, #0f172a, #1e1b4b, #581c87);
-        background-size: 600% 600%;
-        animation: GradientAnimation 15s ease infinite;
-        color: #00f2ff;
+        background-color: #f0f4f8;
+        color: #0050aa;
     }
-    @keyframes GradientAnimation {
-        0%{background-position:0% 50%}
-        50%{background-position:100% 50%}
-        100%{background-position:0% 50%}
+    
+    /* Die typische Lidl-Blaue Kopfzeile */
+    h1 {
+        background-color: #0050aa;
+        color: #fff !important;
+        padding: 20px;
+        border-radius: 0 0 20px 20px;
+        text-align: center;
+        font-family: 'Arial Black', sans-serif;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
-    .deal-alarm {
-        background-color: rgba(255, 0, 0, 0.2);
+
+    /* Coupon-Karten-Design */
+    .coupon-card {
+        background-color: white;
+        border-left: 10px solid #e2001a; /* Lidl Rot */
         padding: 15px;
         border-radius: 10px;
-        border: 2px solid #ff0000;
-        text-align: center;
+        box-shadow: 2px 2px 10px rgba(0,0,0,0.05);
+        margin-bottom: 15px;
+    }
+    
+    .coupon-title {
+        color: #e2001a;
         font-weight: bold;
-        color: #ff0000;
-        animation: blinker 1.5s linear infinite;
-        margin-bottom: 20px;
-        box-shadow: 0 0 15px #ff0000;
+        font-size: 1.2rem;
     }
-    @keyframes blinker { 50% { opacity: 0.3; } }
-    .result-card {
-        background: rgba(0, 0, 0, 0.6);
-        padding: 20px;
-        border-radius: 20px;
-        border: 2px solid #ff00ff;
-        box-shadow: 0 0 15px #ff00ff;
-        margin-bottom: 20px;
-        text-align: center;
-        min-height: 150px;
-    }
-    h1 {
-        color: #fff;
-        text-shadow: 0 0 10px #00f2ff, 0 0 20px #00f2ff;
-        text-align: center;
-        font-family: monospace;
-    }
+
+    /* Sidebar-Styling */
     [data-testid="stSidebar"] {
-        background-color: rgba(15, 23, 42, 0.95) !important;
-        border-right: 2px solid #00f2ff;
+        background-color: #0050aa !important;
+    }
+    [data-testid="stSidebar"] * {
+        color: white !important;
+    }
+    
+    /* Gelber Lidl-Button */
+    .stButton>button {
+        background-color: #fff000 !important;
+        color: #0050aa !important;
+        border-radius: 25px;
+        border: none;
+        font-weight: bold;
+        width: 100%;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# --- SEITENLEISTE ---
+# --- SEITENLEISTE (Profil & Karte) ---
 with st.sidebar:
-    st.image("https://img.icons8.com/clouds/200/flash-light.png", width=120)
-    st.markdown('<h2 style="color: #00f2ff; text-shadow: 0 0 10px #00f2ff; font-family: monospace;">⚡ SPAR-COCKPIT</h2>', unsafe_allow_html=True)
-    plz = st.text_input("📍 DEIN STANDORT:", value="26639")
+    st.markdown("## 👤 MEIN PROFIL")
+    st.write("Hallo, Spar-Profi!")
     st.markdown("---")
-    st.header("🛒 SHOP-LISTE")
-    item = st.text_input("Artikel merken:")
-    if st.button("HINZUFÜGEN"):
+    
+    # Simulierte digitale Kundenkarte
+    st.markdown("""
+    <div style="background: white; padding: 10px; border-radius: 10px; text-align: center;">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=PREIS-PROFI-MEMBER" width="120">
+        <p style="color: #0050aa; font-weight: bold;">MEIN SCAN-CODE</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("---")
+    plz = st.text_input("📍 MEIN MARKT (PLZ):", value="26639")
+    
+    st.header("📋 EINKAUFSLISTE")
+    item = st.text_input("Artikel hinzufügen:")
+    if st.button("SPEICHERN"):
         if 'liste' not in st.session_state: st.session_state.liste = []
         if item: st.session_state.liste.append(item)
+    
     if 'liste' in st.session_state:
         for i in st.session_state.liste:
-            st.write(f"🔹 {i}")
+            st.write(f"🛒 {i}")
 
 # --- HAUPTBEREICH ---
-st.title("⚡ PREIS-PROFI")
+st.title("💙 PREIS-PLUS")
 
-deals = ["🔥 KAFFEE 25% GÜNSTIGER!", "🚀 TANKEN IN WIESMOOR GÜNSTIG!", "💥 ENERGY DRINKS IM ANGEBOT!"]
-st.markdown(f'<div class="deal-alarm">🚨 LIVE-ALARM: {random.choice(deals)}</div>', unsafe_allow_html=True)
+# --- COUPON DER WOCHE ---
+st.markdown("""
+<div class="coupon-card">
+    <p class="coupon-title">🔥 COUPON-HIGHLIGHT</p>
+    <p style="color: #555;">Gültig in Wiesmoor & Umzu</p>
+    <h2 style="color: #0050aa;">-25% AUF ALLES</h2>
+    <p>Aktiviere diesen Coupon bei deiner nächsten Suche!</p>
+</div>
+""", unsafe_allow_html=True)
 
-query = st.text_input("", placeholder="WELCHEN DEAL SUCHST DU?")
+# --- SUCHE ---
+query = st.text_input("Welches Produkt suchst du heute?", placeholder="z.B. Milch, Werkzeug...")
 
 if query:
-    st.snow()
-    st.markdown(f"### Ergebnisse für: {query.upper()}")
-    col1, col2, col3 = st.columns(3)
+    st.markdown(f"### 🔍 ERGEBNISSE FÜR '{query.upper()}'")
     
+    col1, col2, col3 = st.columns(3)
     search_term = query.replace(" ", "+")
     
     with col1:
-        st.markdown(f'<div class="result-card"><h3 style="color: #00f2ff;">🌐 WEB</h3><a href="https://www.idealo.de/preisvergleich/MainSearchProductCategory.html?q={search_term}" target="_blank" style="color: #00f2ff; text-decoration: none; font-weight: bold;">IDEALO</a></div>', unsafe_allow_html=True)
+        st.markdown(f'''<div style="background: white; padding: 15px; border-radius: 10px; text-align: center; border-bottom: 5px solid #0050aa;">
+            <p style="font-weight: bold;">ONLINE</p>
+            <a href="https://www.idealo.de/preisvergleich/MainSearchProductCategory.html?q={search_term}" target="_blank" style="color: #0050aa; text-decoration: none;">CHECK</a>
+        </div>''', unsafe_allow_html=True)
+        
     with col2:
-        st.markdown(f'<div class="result-card"><h3 style="color: #ff00ff;">🛒 SHOP</h3><a href="https://www.google.com/search?tbm=shop&q={search_term}" target="_blank" style="color: #ff00ff; text-decoration: none; font-weight: bold;">GOOGLE</a></div>', unsafe_allow_html=True)
+        st.markdown(f'''<div style="background: white; padding: 15px; border-radius: 10px; text-align: center; border-bottom: 5px solid #fff000;">
+            <p style="font-weight: bold;">SHOPPING</p>
+            <a href="https://www.google.com/search?tbm=shop&q={search_term}" target="_blank" style="color: #0050aa; text-decoration: none;">PREISE</a>
+        </div>''', unsafe_allow_html=True)
+
     with col3:
-        # Marktguru als stabilere Alternative zu kaufDA
-        st.markdown(f'<div class="result-card"><h3 style="color: #39ff14;">🏠 LOKAL</h3><a href="https://www.marktguru.de/search/{search_term}" target="_blank" style="color: #39ff14; text-decoration: none; font-weight: bold;">PROSPEKTE</a></div>', unsafe_allow_html=True)
+        st.markdown(f'''<div style="background: white; padding: 15px; border-radius: 10px; text-align: center; border-bottom: 5px solid #e2001a;">
+            <p style="font-weight: bold;">LOKAL</p>
+            <a href="https://www.marktguru.de/search/{search_term}" target="_blank" style="color: #0050aa; text-decoration: none;">PROSPEKTE</a>
+        </div>''', unsafe_allow_html=True)
 
     st.markdown("---")
-    maps_url = f"https://www.google.com/maps/search/{search_term}+{plz}"
-    st.markdown(f"📍 [**LÄDEN IN DER NÄHE AUF DER KARTE ANZEIGEN**]({maps_url})")
+    st.info(f"📍 Route zum nächsten Markt mit '{query}' in {plz}")
+    st.markdown(f"[**AUF DER KARTE ANZEIGEN**](https://www.google.com/maps/search/{search_term}+{plz})")
+
+else:
+    # Begrüßung wie in der App
+    st.image("https://img.icons8.com/clouds/200/shopping-basket-2.png", width=150)
+    st.write("Wähle einen Markt aus, um die besten Coupons in deiner Nähe zu sehen.")
