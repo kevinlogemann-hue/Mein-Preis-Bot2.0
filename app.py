@@ -86,7 +86,6 @@ if query:
     st.markdown(f"### Ergebnisse für: {query.upper()}")
     col1, col2, col3 = st.columns(3)
     
-    # URL-Encoding für Sonderzeichen (Leerzeichen zu +)
     search_term = query.replace(" ", "+")
     
     with col1:
@@ -94,8 +93,8 @@ if query:
     with col2:
         st.markdown(f'<div class="result-card"><h3 style="color: #ff00ff;">🛒 SHOP</h3><a href="https://www.google.com/search?tbm=shop&q={search_term}" target="_blank" style="color: #ff00ff; text-decoration: none; font-weight: bold;">GOOGLE</a></div>', unsafe_allow_html=True)
     with col3:
-        # Neuer, stabilerer Link für die Prospektsuche
-        st.markdown(f'<div class="result-card"><h3 style="color: #39ff14;">🏠 LOKAL</h3><a href="https://www.kaufda.de/insights/search?query={search_term}" target="_blank" style="color: #39ff14; text-decoration: none; font-weight: bold;">PROSPEKTE</a></div>', unsafe_allow_html=True)
+        # Marktguru als stabilere Alternative zu kaufDA
+        st.markdown(f'<div class="result-card"><h3 style="color: #39ff14;">🏠 LOKAL</h3><a href="https://www.marktguru.de/search/{search_term}" target="_blank" style="color: #39ff14; text-decoration: none; font-weight: bold;">PROSPEKTE</a></div>', unsafe_allow_html=True)
 
     st.markdown("---")
     maps_url = f"https://www.google.com/maps/search/{search_term}+{plz}"
