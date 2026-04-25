@@ -43,6 +43,7 @@ st.markdown("""
         box-shadow: 0 0 15px #ff00ff;
         margin-bottom: 20px;
         text-align: center;
+        min-height: 150px;
     }
     h1 {
         color: #fff;
@@ -85,14 +86,17 @@ if query:
     st.markdown(f"### Ergebnisse für: {query.upper()}")
     col1, col2, col3 = st.columns(3)
     
+    # URL-Encoding für Sonderzeichen (Leerzeichen zu +)
+    search_term = query.replace(" ", "+")
+    
     with col1:
-        st.markdown(f'<div class="result-card"><h3 style="color: #00f2ff;">🌐 WEB</h3><a href="https://www.idealo.de/preisvergleich/MainSearchProductCategory.html?q={query}" target="_blank" style="color: #00f2ff; text-decoration: none; font-weight: bold;">IDEALO</a></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="result-card"><h3 style="color: #00f2ff;">🌐 WEB</h3><a href="https://www.idealo.de/preisvergleich/MainSearchProductCategory.html?q={search_term}" target="_blank" style="color: #00f2ff; text-decoration: none; font-weight: bold;">IDEALO</a></div>', unsafe_allow_html=True)
     with col2:
-        st.markdown(f'<div class="result-card"><h3 style="color: #ff00ff;">🛒 SHOP</h3><a href="https://www.google.com/search?tbm=shop&q={query}" target="_blank" style="color: #ff00ff; text-decoration: none; font-weight: bold;">GOOGLE</a></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="result-card"><h3 style="color: #ff00ff;">🛒 SHOP</h3><a href="https://www.google.com/search?tbm=shop&q={search_term}" target="_blank" style="color: #ff00ff; text-decoration: none; font-weight: bold;">GOOGLE</a></div>', unsafe_allow_html=True)
     with col3:
-        # Robuster Link ohne zip-Parameter für kaufDA
-        st.markdown(f'<div class="result-card"><h3 style="color: #39ff14;">🏠 LOKAL</h3><a href="https://www.kaufda.de/suche/{query}" target="_blank" style="color: #39ff14; text-decoration: none; font-weight: bold;">PROSPEKTE</a></div>', unsafe_allow_html=True)
+        # Neuer, stabilerer Link für die Prospektsuche
+        st.markdown(f'<div class="result-card"><h3 style="color: #39ff14;">🏠 LOKAL</h3><a href="https://www.kaufda.de/insights/search?query={search_term}" target="_blank" style="color: #39ff14; text-decoration: none; font-weight: bold;">PROSPEKTE</a></div>', unsafe_allow_html=True)
 
     st.markdown("---")
-    maps_url = f"https://www.google.com/maps/search/{query}+{plz}"
+    maps_url = f"https://www.google.com/maps/search/{search_term}+{plz}"
     st.markdown(f"📍 [**LÄDEN IN DER NÄHE AUF DER KARTE ANZEIGEN**]({maps_url})")
