@@ -1,4 +1,6 @@
 import streamlit as st
+import random
+import time
 
 # --- KONFIGURATION ---
 st.set_page_config(
@@ -7,7 +9,7 @@ st.set_page_config(
     layout="centered"
 )
 
-# --- HYPER-STYLING (Neon-Cyber-Look) ---
+# --- HYPER-STYLING (Neon + Blink-Effekt) ---
 st.markdown("""
 <style>
     .stApp {
@@ -21,6 +23,25 @@ st.markdown("""
         50%{background-position:100% 50%}
         100%{background-position:0% 50%}
     }
+    
+    /* Blinkender Alarm-Effekt */
+    .deal-alarm {
+        background-color: rgba(255, 0, 0, 0.2);
+        padding: 15px;
+        border-radius: 10px;
+        border: 2px solid #ff0000;
+        text-align: center;
+        font-weight: bold;
+        color: #ff0000;
+        animation: blinker 1.5s linear infinite;
+        margin-bottom: 20px;
+        box-shadow: 0 0 15px #ff0000;
+    }
+
+    @keyframes blinker {
+        50% { opacity: 0.3; }
+    }
+
     .result-card {
         background: rgba(0, 0, 0, 0.6);
         padding: 20px;
@@ -46,8 +67,6 @@ st.markdown("""
 # --- SEITENLEISTE ---
 with st.sidebar:
     st.image("https://img.icons8.com/clouds/200/flash-light.png", width=120)
-    
-    # Das neue leuchtende Spar-Cockpit
     st.markdown('<h2 style="color: #00f2ff; text-shadow: 0 0 10px #00f2ff; font-family: monospace;">⚡ SPAR-COCKPIT</h2>', unsafe_allow_html=True)
     
     plz = st.text_input("📍 DEIN STANDORT:", value="26639")
@@ -56,10 +75,8 @@ with st.sidebar:
     st.header("🛒 SHOP-LISTE")
     item = st.text_input("Artikel merken:")
     if st.button("HINZUFÜGEN"):
-        if 'liste' not in st.session_state: 
-            st.session_state.liste = []
-        if item: 
-            st.session_state.liste.append(item)
+        if 'liste' not in st.session_state: st.session_state.liste = []
+        if item: st.session_state.liste.append(item)
     
     if 'liste' in st.session_state:
         for i in st.session_state.liste:
@@ -67,6 +84,17 @@ with st.sidebar:
 
 # --- HAUPTBEREICH ---
 st.title("⚡ PREIS-PROFI")
+
+# --- LIVE DEAL TICKER ---
+deals = [
+    "🔥 KAFFEE 25% GÜNSTIGER BEI REWE!", 
+    "🧨 iPHONE 15 BESTPREIS ENTDECKT!", 
+    "🚀 TANKEN IN WIESMOOR AKTUELL GÜNSTIG!", 
+    "💥 ENERGY DRINKS IM ANGEBOT BEI LIDL!"
+]
+random_deal = random.choice(deals)
+st.markdown(f'<div class="deal-alarm">🚨 LIVE-ALARM: {random_deal}</div>', unsafe_allow_html=True)
+
 query = st.text_input("", placeholder="WELCHEN DEAL SUCHST DU?")
 
 if query:
