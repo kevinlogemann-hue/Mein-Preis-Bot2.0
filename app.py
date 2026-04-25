@@ -9,31 +9,22 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Eigenes CSS für Styling (Hintergrundfarbe, Schriftfarben, etc.)
+# Eigenes CSS für das Design
 st.markdown("""
 <style>
     .main {
         background-color: #f0f2f6;
     }
-    .stTextInput>div>div>input {
-        color: #4F8BF9;
-    }
     h1 {
         color: #1E3A8A;
-        font-family: 'Helvetica Neue', sans-serif;
-    }
-    .sidebar .sidebar-content {
-        background-color: #ffffff;
     }
 </style>
 """, unsafe_allow_html=True)
 
-
 # --- SEITENLEISTE ---
 with st.sidebar:
-    # HIER FÜGEN WIR DAS LOGO EIN
-    # Ersetze die URL unten mit deinem eigenen Bild-Link, falls vorhanden.
-    logo_url = "https://img.icons8.com/fluency/144/money-bag.png" # Platzhalter-Logo
+    # Logo-Platzhalter
+    logo_url = "https://img.icons8.com/fluency/144/money-bag.png"
     st.image(logo_url, width=100)
     
     st.title("Preis-Profi AI")
@@ -58,12 +49,10 @@ with st.sidebar:
             st.session_state.liste = []
             st.rerun()
 
-
 # --- HAUPTBEREICH ---
-# Header-Bereich mit Titel und kurzem Text
 col1, col2 = st.columns([1, 4])
 with col1:
-    st.image(logo_url, width=80) # Logo auch im Hauptbereich anzeigen
+    st.image(logo_url, width=80)
 with col2:
     st.title("💰 Preis-Profi AI")
     st.subheader(f"Günstig finden in {plz}")
@@ -89,13 +78,10 @@ if query:
 
     with col3:
         st.warning("🏠 Lokal")
-        # Hier nutzen wir jetzt die PLZ für die Prospektsuche
         kaufda_url = f"https://www.kaufda.de/suche/{query.replace(' ', '%20')}?zip={plz}"
         st.markdown(f"[Prospekte in {plz}]({kaufda_url})")
 
     st.markdown("---")
-    
     st.write(f"📍 **Geschäfte mit '{query}' nahe {plz}:**")
-    # Google Maps Suche kombiniert mit der PLZ
     maps_url = f"https://www.google.com/maps/search/{query.replace(' ', '+')}+{plz}"
     st.markdown(f"[Auf Google Maps öffnen]({maps_url})")
