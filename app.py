@@ -1,12 +1,46 @@
 import streamlit as st
 import pandas as pd
 
-st.set_page_config(page_title="Preis-Profi AI", page_icon="💰", layout="centered")
+# --- KONFIGURATION & STYLING ---
+st.set_page_config(
+    page_title="Preis-Profi AI",
+    page_icon="💰",
+    layout="centered",
+    initial_sidebar_state="expanded"
+)
 
-# Seitenleiste für Einstellungen
+# Eigenes CSS für Styling (Hintergrundfarbe, Schriftfarben, etc.)
+st.markdown("""
+<style>
+    .main {
+        background-color: #f0f2f6;
+    }
+    .stTextInput>div>div>input {
+        color: #4F8BF9;
+    }
+    h1 {
+        color: #1E3A8A;
+        font-family: 'Helvetica Neue', sans-serif;
+    }
+    .sidebar .sidebar-content {
+        background-color: #ffffff;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+
+# --- SEITENLEISTE ---
 with st.sidebar:
-    st.header("📍 Standort & Liste")
-    plz = st.text_input("Deine PLZ für lokale Angebote:", placeholder="z.B. 26639", value="26639")
+    # HIER FÜGEN WIR DAS LOGO EIN
+    # Ersetze die URL unten mit deinem eigenen Bild-Link, falls vorhanden.
+    logo_url = "https://img.icons8.com/fluency/144/money-bag.png" # Platzhalter-Logo
+    st.image(logo_url, width=100)
+    
+    st.title("Preis-Profi AI")
+    st.markdown("---")
+    
+    st.header("📍 Standort")
+    plz = st.text_input("Deine PLZ:", placeholder="z.B. 26639", value="26639")
     st.markdown("---")
     
     st.header("📋 Meine Liste")
@@ -24,9 +58,16 @@ with st.sidebar:
             st.session_state.liste = []
             st.rerun()
 
-# Hauptbereich
-st.title("💰 Preis-Profi AI")
-st.write(f"Aktueller Suchbereich: **{plz}**")
+
+# --- HAUPTBEREICH ---
+# Header-Bereich mit Titel und kurzem Text
+col1, col2 = st.columns([1, 4])
+with col1:
+    st.image(logo_url, width=80) # Logo auch im Hauptbereich anzeigen
+with col2:
+    st.title("💰 Preis-Profi AI")
+    st.subheader(f"Günstig finden in {plz}")
+
 st.markdown("---")
 
 query = st.text_input("Was suchst du heute?", placeholder="z.B. Butter, Akkuschrauber...")
