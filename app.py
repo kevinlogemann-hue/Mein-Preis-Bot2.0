@@ -1,12 +1,12 @@
 import streamlit as st
 
 # --- KONFIGURATION ---
-st.set_page_config(page_title="🚨 SPARE JETZT! 🚨", page_icon="💥", layout="centered")
+st.set_page_config(page_title="🚨 DEAL-RADAR 🚨", page_icon="💥", layout="centered")
 
-# --- HIGH-ATTENTION CSS ---
+# --- STYLE (Noch mehr Rot & Auffälliger) ---
 st.markdown("""
 <style>
-    .stApp { background-color: #ffffff; color: #333; }
+    .stApp { background-color: #ffffff; }
     .header-bar {
         background: linear-gradient(135deg, #e2001a, #ff4b4b);
         color: white;
@@ -17,68 +17,85 @@ st.markdown("""
         font-size: 1.8rem;
         text-transform: uppercase;
         box-shadow: 0 10px 20px rgba(226,0,26,0.3);
-        margin-bottom: 30px;
     }
-    .coupon-box {
-        border: 3px solid #e2001a;
-        border-radius: 20px;
-        padding: 20px;
+    /* Blinkender Alarm für Favoriten */
+    .favoriten-alarm {
+        background-color: #ff0000;
+        color: white;
+        padding: 15px;
+        border-radius: 15px;
+        text-align: center;
+        font-weight: bold;
+        animation: blinker 1s linear infinite;
         margin-bottom: 20px;
-        background: rgba(226,0,26,0.05);
+        border: 3px solid #fff000;
     }
-    .stButton>button {
-        background-color: #e2001a !important;
-        color: white !important;
-        border-radius: 50px !important;
-        font-weight: bold !important;
-        width: 100% !important;
+    @keyframes blinker { 50% { opacity: 0.5; } }
+    
+    .fav-card {
+        border: 2px dashed #e2001a;
+        padding: 10px;
+        border-radius: 15px;
+        margin-bottom: 10px;
+        background: #fff5f5;
     }
 </style>
 """, unsafe_allow_html=True)
 
 # --- HEADER ---
-st.markdown('<div class="header-bar">💥 DEIN DEAL-ALARM 💥</div>', unsafe_allow_html=True)
+st.markdown('<div class="header-bar">💥 DEIN DEAL-RADAR 💥</div>', unsafe_allow_html=True)
+
+# --- NEU: FAVORITEN & BENACHRICHTIGUNGEN ---
+if 'favs' not in st.session_state:
+    st.session_state.favs = []
+
+st.subheader("📌 MEIN FAVORITEN-RADAR")
+
+# Alarm anzeigen, wenn Favoriten vorhanden sind
+if st.session_state.favs:
+    st.markdown(f'<div class="favoriten-alarm">🚨 ALARM: Checke jetzt Angebote für deine {len(st.session_state.favs)} Favoriten!</div>', unsafe_allow_html=True)
+    
+    cols = st.columns(len(st.session_state.favs) if len(st.session_state.favs) < 4 else 4)
+    for idx, f in enumerate(st.session_state.favs):
+        with cols[idx % 4]:
+            st.markdown(f'<div class="fav-card"><b>{f}</b></div>', unsafe_allow_html=True)
+            if st.button("Check", key=f"check_{idx}"):
+                st.switch_page(f"https://www.marktguru.de/search/{f}") # Direkter Prospekt-Check
+    
+    if st.button("🗑️ Alle Favoriten löschen"):
+        st.session_state.favs = []
+        st.rerun()
+else:
+    st.info("Noch keine Favoriten gespeichert. Nutze die Suche unten!")
 
 # --- ACTION AREA ---
-st.error("⚠️ ACHTUNG: VERPASSE KEINE PUNKTE MEHR!")
-
-col_a, col_b = st.columns(2)
-with col_a:
-    st.link_button("🔵 LIDL PLUS (Wiesmoor)", "https://www.lidl.de/c/online-prospekte/s10005610")
-with col_b:
-    st.link_button("🅿️ PAYBACK COUPONS", "https://www.payback.de/coupons")
-
-st.markdown("""
-<div class="coupon-box">
-    <h3 style="color:#e2001a; margin:0;">🔥 MEINPROSPEKT CHECK</h3>
-    <p>Alle Prospekte in deiner Nähe auf einen Blick.</p>
-</div>
-""", unsafe_allow_html=True)
-st.link_button("LOKALE PROSPEKTE ÖFFNEN", "https://www.meinprospekt.de/")
-
-# --- SUCHE ---
 st.markdown("---")
-st.subheader("🚀 WAS SUCHST DU HEUTE GÜNSTIGER?")
+c1, c2 = st.columns(2)
+with c1:
+    st.link_button("🔵 LIDL PLUS", "https://www.lidl.de/c/online-prospekte/s10005610")
+with c2:
+    st.link_button("🅿️ PAYBACK", "https://www.payback.de/coupons")
+
+# --- SUCHE & NEU: ALS FAVORIT SPEICHERN ---
+st.markdown("---")
+st.subheader("🚀 PRODUKT-SUCHE")
 query = st.text_input("", placeholder="z.B. Cola, Kaffee, Werkzeug...")
 
 if query:
-    st.balloons()
     search_term = query.replace(" ", "+")
     
-    st.success(f"SUCHE LÄUFT FÜR: {query.upper()}")
-    
-    c1, c2, c3 = st.columns(3)
-    
-    # Vereinfachte Links ohne HTML-Verschachtelung für maximale Stabilität
-    with c1:
-        st.info("🛒 LIDL SHOP")
-        st.markdown(f"[Hier klicken](https://www.lidl.de/q/search?q={search_term})")
-    with c2:
-        st.info("🅿️ PAYBACK")
-        st.markdown(f"[Hier klicken](https://www.google.com/search?q=Payback+{search_term})")
-    with c3:
-        st.info("⚖️ IDEALO")
-        st.markdown(f"[Hier klicken](https://www.idealo.de/preisvergleich/MainSearchProductCategory.html?q={search_term})")
+    # Button um Favoriten hinzuzufügen
+    if st.button(f"⭐ '{query.upper()}' ALS FAVORIT SPEICHERN"):
+        if query not in st.session_state.favs:
+            st.session_state.favs.append(query)
+            st.success(f"{query} zum Radar hinzugefügt!")
+            st.rerun()
 
-st.markdown("---")
-st.warning("📍 Tipp: Nutze die App am Handy!")
+    st.markdown(f"### Ergebnisse für: {query.upper()}")
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.markdown(f"[🛒 Lidl Shop](https://www.lidl.de/q/search?q={search_term})")
+    with c2:
+        st.markdown(f"[🅿️ Payback](https://www.google.com/search?q=Payback+{search_term})")
+    with c3:
+        st.markdown(f"[⚖️ Idealo](https://www.idealo.de/preisvergleich/MainSearchProductCategory.html?q={search_term})")
