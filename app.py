@@ -2,75 +2,57 @@ import streamlit as st
 import pandas as pd
 
 # --- KONFIGURATION ---
-st.set_page_config(page_title="WIESMOOR SPRIT-CHECK", page_icon="⛽")
+st.set_page_config(page_title="WIESMOOR TANK-RADAR", page_icon="⛽", layout="centered")
 
-# --- STYLE ---
+# --- HIGH-ATTENTION CSS ---
 st.markdown("""
 <style>
-    .stApp { background-color: #ffffff; }
+    .stApp { background-color: #f9f9f9; }
     .header-bar {
         background: linear-gradient(135deg, #e2001a, #b30014);
         color: white; padding: 20px; text-align: center;
-        border-radius: 0 0 30px 30px; font-weight: bold; font-size: 1.8rem;
+        border-radius: 0 0 30px 30px; font-weight: bold; font-size: 1.5rem;
     }
     .tank-card {
-        padding: 15px; border-radius: 12px; margin-bottom: 10px;
+        padding: 15px; border-radius: 15px; margin-bottom: 12px;
         color: white; font-weight: bold; display: flex; 
         justify-content: space-between; align-items: center;
-        box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
-    .brand-label { font-size: 1.1rem; }
-    .price-label { font-size: 1.3rem; background: rgba(0,0,0,0.2); padding: 5px 10px; border-radius: 8px; }
-    .best { background-color: #28a745; border: 2px solid #1e7e34; }
-    .normal { background-color: #e2001a; }
+    .best-price { background: linear-gradient(90deg, #28a745, #2ecc71); border-left: 8px solid #1e7e34; }
+    .normal-price { background: linear-gradient(90deg, #e2001a, #ff4b4b); border-left: 8px solid #a71d2a; }
+    .price-tag { font-size: 1.4rem; background: rgba(0,0,0,0.25); padding: 5px 12px; border-radius: 10px; min-width: 80px; text-align: center; }
 </style>
 """, unsafe_allow_html=True)
 
 st.markdown('<div class="header-bar">⛽ SPRIT-RADAR WIESMOOR</div>', unsafe_allow_html=True)
 
-# --- DATEN-SIMULATION (Wiesmoor & Umzu) ---
-# Hier sind alle gängigen Marken der Region drin
-tanks_data = [
-    {"Marke": "CLASSIC", "Ort": "Wiesmoor", "E5": 1.79, "E10": 1.73, "Diesel": 1.62},
-    {"Marke": "AVIA", "Ort": "Wiesmoor", "E5": 1.82, "E10": 1.76, "Diesel": 1.65},
-    {"Marke": "RAIFFEISEN", "Ort": "Wiesmoor", "E5": 1.80, "E10": 1.74, "Diesel": 1.64},
-    {"Marke": "SCORE", "Ort": "Friedeburg", "E5": 1.78, "E10": 1.72, "Diesel": 1.60},
-    {"Marke": "ARAL", "Ort": "Uplengen", "E5": 1.85, "E10": 1.79, "Diesel": 1.69},
-    {"Marke": "SHELL", "Ort": "Remels", "E5": 1.87, "E10": 1.81, "Diesel": 1.71},
+# --- TANKSTELLEN DATEN ---
+tanks = [
+    {"Name": "CLASSIC", "Ort": "Wiesmoor", "E5": 1.79, "E10": 1.73, "Diesel": 1.62},
+    {"Name": "AVIA", "Ort": "Wiesmoor", "E5": 1.82, "E10": 1.76, "Diesel": 1.65},
+    {"Name": "RAIFFEISEN", "Ort": "Wiesmoor", "E5": 1.80, "E10": 1.74, "Diesel": 1.64},
+    {"Name": "SCORE", "Ort": "Friedeburg", "E5": 1.78, "E10": 1.72, "Diesel": 1.60},
+    {"Name": "ARAL", "Ort": "Uplengen", "E5": 1.85, "E10": 1.79, "Diesel": 1.69},
+    {"Name": "SHELL", "Ort": "Remels", "E5": 1.87, "E10": 1.81, "Diesel": 1.71},
+    {"Name": "JET", "Ort": "Aurich", "E5": 1.77, "E10": 1.71, "Diesel": 1.59},
 ]
 
-df = pd.DataFrame(tanks_data)
+df = pd.DataFrame(tanks)
 
-# --- TABS FÜR KRAFTSTOFFE ---
-tab1, tab2, tab3 = st.tabs(["🟢 E5", "🟡 E10", "⚫ Diesel"])
+# --- REITER FÜR KRAFTSTOFFARTEN ---
+tab1, tab2, tab3 = st.tabs(["🟢 Super E5", "🟡 Super E10", "⚫ Diesel"])
 
-def draw_cards(fuel_type):
-    sorted_df = df.sort_values(by=fuel_type)
+def show_gas_stations(fuel):
+    # Nach Preis sortieren
+    sorted_df = df.sort_values(by=fuel)
+    best_id = sorted_df.index[0]
+    
     for i, row in sorted_df.iterrows():
-        is_best = i == sorted_df.index[0]
-        style_class = "best" if is_best else "normal"
+        is_best = (i == best_id)
+        card_class = "best-price" if is_best else "normal-price"
+        
         st.markdown(f"""
-        <div class="tank-card {style_class}">
-            <div class="brand-label">
-                {row['Marke']} <br>
-                <small style="font-weight:normal; opacity:0.8;">{row['Ort']}</small>
-            </div>
-            <div class="price-label">{row[fuel_type]:.2f} €</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-with tab1:
-    st.write("### Aktuelle Preise für Super E5")
-    draw_cards("E5")
-
-with tab2:
-    st.write("### Aktuelle Preise für Super E10")
-    draw_cards("E10")
-
-with tab3:
-    st.write("### Aktuelle Preise für Diesel")
-    draw_cards("Diesel")
-
-# --- FOOTER ---
-st.markdown("---")
-st.caption("📍 Preise werden automatisch sortiert. Die günstigste Tankstelle ist grün markiert.")
+        <div class="tank-card {card_class}">
+            <div>
+                <span style="font-size:1
