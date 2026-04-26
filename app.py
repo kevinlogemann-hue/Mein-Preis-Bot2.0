@@ -1,93 +1,115 @@
 import streamlit as st
 
-# --- KONFIGURATION ---
-st.set_page_config(page_title="SPAR-CENTER PRO", page_icon="💳", layout="centered")
+# --- KONFIGURATION (Titel angepasst) ---
+st.set_page_config(page_title="🚨 SPARE JETZT! 🚨", page_icon="💥", layout="centered")
 
-# --- APP-STYLE (Dein Screenshot-Look) ---
+# --- HIGH-ATTENTION CSS (Rot, Neon, Groß) ---
 st.markdown("""
 <style>
-    .stApp { background-color: #ffffff; }
+    /* Heller Hintergrund, um das Rot knallen zu lassen */
+    .stApp { background-color: #ffffff; color: #333; }
     
-    /* Blaue Header-Bar */
+    /* Aggressive Rote Header-Bar mit Schatten */
     .header-bar {
-        background-color: #0050aa;
+        background: linear-gradient(135deg, #e2001a, #ff4b4b);
         color: white;
-        padding: 15px;
+        padding: 25px;
         text-align: center;
-        border-radius: 0 0 15px 15px;
+        border-radius: 0 0 30px 30px;
         font-weight: bold;
-        margin-bottom: 20px;
+        font-size: 2rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        box-shadow: 0 10px 20px rgba(226,0,26,0.3);
+        margin-bottom: 30px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
     }
 
-    /* Coupon-Karten wie im Screenshot */
+    /* Rote, auffällige Coupon-Karten */
     .coupon-box {
-        border: 1px solid #e0e0e0;
-        border-radius: 12px;
-        padding: 15px;
-        margin-bottom: 10px;
-        background: white;
+        border: 3px solid #e2001a;
+        border-radius: 20px;
+        padding: 20px;
+        margin-bottom: 20px;
+        background: rgba(226,0,26,0.05);
         display: flex;
         justify-content: space-between;
         align-items: center;
+        transition: transform 0.2s;
+    }
+    .coupon-box:hover {
+        transform: scale(1.02);
+        box-shadow: 0 5px 15px rgba(226,0,26,0.2);
     }
 
-    /* Untere Navigationsleiste Simulation */
-    .nav-bar {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        background: white;
-        border-top: 1px solid #ddd;
-        display: flex;
-        justify-content: space-around;
-        padding: 10px 0;
-        z-index: 100;
+    /* Große, leuchtende Suchleiste */
+    .stTextInput>div>div>input {
+        border: 3px solid #0050aa !important;
+        border-radius: 50px !important;
+        font-size: 1.2rem !important;
+        padding: 15px !important;
+        box-shadow: 0 0 10px rgba(0,80,170,0.1);
     }
-    .nav-item { text-align: center; color: #666; font-size: 0.7rem; }
+
+    /* Rote Buttons mit Hover-Effekt */
+    .stButton>button {
+        background-color: #e2001a !important;
+        color: white !important;
+        border-radius: 50px !important;
+        border: none !important;
+        font-weight: bold !important;
+        font-size: 1.1rem !important;
+        padding: 10px 20px !important;
+        width: 100% !important;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
+    }
+    .stButton>button:hover {
+        background-color: #ff4b4b !important;
+        box-shadow: 0 6px 12px rgba(226,0,26,0.3) !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
-# --- HEADER ---
-st.markdown('<div class="header-bar">MEIN SPAR-CENTER 2.0</div>', unsafe_allow_html=True)
+# --- HEADER (Knallrot) ---
+st.markdown('<div class="header-bar">💥 DEIN DEAL-ALARM 💥</div>', unsafe_allow_html=True)
 
-# --- COUPON BEREICH (Nachbau deines Bildes) ---
-st.subheader("Deine Top-Coupons")
+# --- ACTION AREA (Coupons) ---
+st.error("⚠️ ACHTUNG: VERPASSE KEINE PUNKTE MEHR!")
 
-col1, col2 = st.columns(2)
-with col1:
-    st.link_button("🔵 LIDL PLUS AKTIVIEREN", "https://www.lidl.de/c/online-prospekte/s10005610", use_container_width=True)
-with col2:
-    st.link_button("🅿️ PAYBACK COUPONS", "https://www.payback.de/coupons", use_container_width=True)
+c1, c2 = st.columns(2)
+with c1:
+    st.link_button("🔵 ZU LIDL PLUS (Wiesmoor)", "https://www.lidl.de/c/online-prospekte/s10005610")
+with c2:
+    st.link_button("🅿️ ZU PAYBACK COUPONS", "https://www.payback.de/coupons")
 
 st.markdown("""
 <div class="coupon-box">
     <div>
-        <b style="color:#e2001a;">OTTO DEAL</b><br>
-        <small>Extra-Punkte auf Mode & Technik</small>
+        <h3 style="color:#e2001a; margin:0;">🔥 MEINPROSPEKT CHECK</h3>
+        <p style="margin:5px 0;">Alle Prospekte in deiner Nähe auf einen Blick.</p>
     </div>
-    <div style="color:#0050aa; font-weight:bold;">AKTIV</div>
+    <a href="https://www.meinprospekt.de/" target="_blank" style="background:#e2001a; color:white; padding:10px 20px; border-radius:50px; text-decoration:none; font-weight:bold;">ÖFFNEN</a>
 </div>
 """, unsafe_allow_html=True)
 
-# --- SUCHE ---
+# --- SUCHE (Mit blauer Akzentfarbe) ---
 st.markdown("---")
-query = st.text_input("🔍 Produkt suchen:", placeholder="Was möchtest du heute sparen?")
+st.subheader("🚀 WAS SUCHST DU HEUTE GÜNSTIGER?")
+query = st.text_input("", placeholder="z.B. Cola, Kaffee, Werkzeug...")
 
 if query:
     search_term = query.replace(" ", "+")
-    c1, c2, c3 = st.columns(3)
-    with c1: st.markdown(f"[🛒 Lidl Shop](https://www.lidl.de/q/search?q={search_term})")
-    with c2: st.markdown(f"[🅿️ Payback Suche](https://www.google.com/search?q=Payback+{search_term})")
-    with c3: st.markdown(f"[⚖️ Idealo](https://www.idealo.de/preisvergleich/MainSearchProductCategory.html?q={search_term})")
-
-# --- UNTERE NAVI (Optik) ---
-st.markdown("""
-<div class="nav-bar">
-    <div class="nav-item">🕒<br>Aktuell</div>
-    <div class="nav-item" style="color:#0050aa;">🎟️<br>Coupons</div>
-    <div class="nav-item">💳<br>Karte</div>
-    <div class="nav-item">🛒<br>Shops</div>
-</div>
-<br><br>
-""", unsafe_allow_html=True)
+    
+    # Rote Info-Box für die Ergebnisse
+    st.success(f"Deals gefunden für: {query.upper()}")
+    
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.markdown(f'''<div style="background:#0050aa; color:white; padding:15px; border-radius:10px; text-align:center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <h4 style="margin:0; color:white;">🛒 Lidl Shop</h4>
+            <a href="https://www.lidl.de/q/search?q={search_term}" target="_blank" style="color:#fff000; font-weight:bold; text-decoration:none;">PREISE</a>
+        </div>''', unsafe_allow_html=True)
+    with col2:
+        st.markdown(f'''<div style="background:#0091ff; color:white; padding:15px; border-radius:10px; text-align:center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <h4 style="margin:0; color:white;">🅿️ Payback</h4>
+            <a href="https://www.google.com/search?q=Payback+{search_term}" target="_
