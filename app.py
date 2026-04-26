@@ -22,7 +22,7 @@ st.markdown("""
 
 # --- HAUPTBEREICH ---
 st.title("💳 MEIN SPAR-CENTER")
-st.write("Verwalte deine Karten und suche nach Deals.")
+st.write("Deine Schaltzentrale für Lidl Plus & Payback")
 
 # --- VERKNÜPFUNGS-SECTION ---
 col1, col2 = st.columns(2)
@@ -31,38 +31,43 @@ with col1:
     st.markdown("""
     <div class="card lidl">
         <h3 style="color: #0050aa;">💙 Lidl Plus</h3>
-        <p style="font-size: 0.8rem; color: #666;">Exklusive Coupons & Kassenbons</p>
+        <p style="font-size: 0.8rem; color: #666;">Coupons & Prospekte</p>
     </div>
     """, unsafe_allow_html=True)
-    if st.button("Lidl App öffnen"):
-        # Dieser Link versucht die App auf dem Handy zu starten
-        st.markdown("[Hier klicken zum Öffnen](https://www.lidl.de/l/lidl-plus)", unsafe_allow_html=True)
+    # Stabiler Link zur offiziellen Prospekt-Übersicht
+    st.link_button("Lidl Prospekte öffnen", "https://www.lidl.de/c/prospekte/s10007572")
 
 with col2:
     st.markdown("""
     <div class="card payback">
         <h3 style="color: #0091ff;">🅿️ Payback</h3>
-        <p style="font-size: 0.8rem; color: #666;">Punkte sammeln & einlösen</p>
+        <p style="font-size: 0.8rem; color: #666;">Punkte & Aktivierung</p>
     </div>
     """, unsafe_allow_html=True)
-    if st.button("Payback öffnen"):
-        st.markdown("[Hier klicken zum Öffnen](https://www.payback.de/coupons)", unsafe_allow_html=True)
+    st.link_button("Payback Coupons", "https://www.payback.de/coupons")
 
 st.markdown("---")
 
 # --- INTELLIGENTE SUCHE ---
-query = st.text_input("Produkt suchen & Punkte optimieren:", placeholder="z.B. Windeln, Kaffee...")
+query = st.text_input("Produkt suchen:", placeholder="z.B. Kaffee, Werkzeug...")
 
 if query:
-    st.info(f"Suche läuft für: {query}")
-    c1, c2 = st.columns(2)
+    search_term = query.replace(" ", "+")
+    st.subheader(f"Ergebnisse für {query}:")
+    
+    c1, c2, c3 = st.columns(3)
     
     with c1:
-        # Sucht direkt bei Payback Partnern
-        url_pb = f"https://www.google.com/search?q=Payback+Punkte+{query}"
-        st.markdown(f"🔍 [Payback Deals für {query}]({url_pb})")
+        # Direktsuche im Lidl Onlineshop
+        st.markdown(f"[🛒 Im Lidl Shop](https://www.lidl.de/q/search?q={search_term})")
         
     with c2:
-        # Sucht direkt im Lidl Onlineshop
-        url_lidl = f"https://www.lidl.de/q/search?q={query}"
-        st.markdown(f"🛒 [Lidl Shop: {query}]({url_lidl})")
+        # Payback Partner Suche via Google
+        st.markdown(f"[🅿️ Payback Deals](https://www.google.com/search?q=Payback+Punkte+{search_term})")
+
+    with c3:
+        # Preisvergleich
+        st.markdown(f"[⚖️ Idealo Check](https://www.idealo.de/preisvergleich/MainSearchProductCategory.html?q={search_term})")
+
+st.markdown("---")
+st.caption("Tipp: Nutze diese App am Handy, um direkt in die installierten Apps zu springen.")
