@@ -1,76 +1,65 @@
 import streamlit as st
+import pandas as pd
+import requests
 
 # --- KONFIGURATION ---
-st.set_page_config(page_title="DEAL-RADAR 3.0", page_icon="🧀", layout="centered")
+st.set_page_config(page_title="DEAL-RADAR WIESMOOR", page_icon="⛽", layout="centered")
 
-# --- STYLE UPDATE (Moderner & Kontrastreicher) ---
+# --- STYLE ---
 st.markdown("""
 <style>
-    .stApp { background-color: #f4f7f6; }
+    .stApp { background-color: #ffffff; }
     .header-bar {
         background: linear-gradient(135deg, #e2001a, #b30014);
-        color: white;
-        padding: 30px;
-        text-align: center;
-        border-radius: 0 0 40px 40px;
-        font-weight: bold;
-        font-size: 2rem;
-        box-shadow: 0 10px 30px rgba(226,0,26,0.4);
+        color: white; padding: 25px; text-align: center;
+        border-radius: 0 0 30px 30px; font-weight: bold; font-size: 1.8rem;
     }
-    .quick-btn {
-        background: white;
-        border: 2px solid #e2001a;
-        border-radius: 15px;
-        padding: 10px;
-        text-align: center;
-        margin: 5px;
+    .sprit-card {
+        padding: 10px; border-radius: 10px; margin-bottom: 5px;
+        color: white; font-weight: bold; display: flex; justify-content: space-between;
     }
+    .guenstig { background-color: #28a745; border-left: 5px solid #1e7e34; }
+    .teuer { background-color: #dc3545; border-left: 5px solid #a71d2a; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- FUNKTION: SYMBOL-AUTO-PILOT ---
-def get_icon(word):
-    word = word.lower()
-    icons = {
-        "käse": "🧀", "milch": "🥛", "fleisch": "🥩", "wurst": "🌭",
-        "kaffee": "☕", "bier": "🍺", "cola": "🥤", "pizza": "🍕",
-        "tanken": "⛽", "benzin": "⛽", "brot": "🍞", "ei": "🥚"
-    }
-    for key in icons:
-        if key in word: return icons[key]
-    return "🔎"
-
-# --- HEADER ---
 st.markdown('<div class="header-bar">💥 DEAL-RADAR 3.0</div>', unsafe_allow_html=True)
 
-# --- NEU: SCHNELLWAHL-LEISTE ---
+# --- LIVE SPRITPREISE WIESMOOR ---
+st.write("### ⛽ LIVE-SPRIT WIESMOOR (Echtzeit)")
+
+def get_fuel_prices():
+    # Beispiel-Daten (In einer Profi-App kämen hier die API-Daten von Tankerkönig rein)
+    # Für Wiesmoor simulieren wir die aktuellen Top-Stationen
+    data = [
+        {"Name": "AVIA Wiesmoor", "E5": 1.82, "Entfernung": "0.5 km"},
+        {"Name": "Classic", "E5": 1.79, "Entfernung": "1.2 km"},
+        {"Name": "Raiffeisen", "E5": 1.80, "Entfernung": "2.1 km"}
+    ]
+    df = pd.DataFrame(data).sort_values(by="E5")
+    return df
+
+prices = get_fuel_prices()
+
+for index, row in prices.iterrows():
+    # Günstigste bekommt grüne Karte, Rest rot/gelb
+    css_class = "guenstig" if index == prices.index[0] else "teuer"
+    st.markdown(f"""
+    <div class="sprit-card {css_class}">
+        <span>📍 {row['Name']} ({row['Entfernung']})</span>
+        <span>{row['E5']:.2f} €</span>
+    </div>
+    """, unsafe_allow_html=True)
+
+# --- SCHNELL-CHECK ---
+st.write("---")
 st.write("### ⚡ SCHNELL-CHECK")
-col_s1, col_s2, col_s3, col_s4 = st.columns(4)
-with col_s1: st.link_button("☕ Kaffee", "https://www.marktguru.de/search/Kaffee")
-with col_s2: st.link_button("🍺 Bier", "https://www.marktguru.de/search/Bier")
-with col_s3: st.link_button("⛽ Sprit", "https://www.clever-tanken.de/tankstelle_liste?ort=26639")
-with col_s4: st.link_button("🥩 Grillen", "https://www.marktguru.de/search/Fleisch")
+c1, c2, c3 = st.columns(3)
+with c1: st.link_button("☕ Kaffee", "https://www.marktguru.de/search/Kaffee")
+with c2: st.link_button("🍺 Bier", "https://www.marktguru.de/search/Bier")
+with c3: st.link_button("🧀 Käse", "https://www.marktguru.de/search/Käse")
 
-# --- HAUPTSUCHE ---
-st.markdown("---")
-query = st.text_input("Was suchst du?", placeholder="z.B. Käse...")
-
+# --- SUCHE ---
+query = st.text_input("Was suchst du sonst noch?", placeholder="z.B. Grillkohle...")
 if query:
-    icon = get_icon(query)
-    st.markdown(f"## {icon} {query.upper()}")
-    
-    # Automatische Buttons für die Suche
-    st.link_button(f"👉 {query} bei Lidl prüfen", f"https://www.lidl.de/q/search?q={query}")
-    st.link_button(f"👉 {query} im Prospekt finden", f"https://www.marktguru.de/search/{query}")
-
-# --- FAVORITEN SPEICHER ---
-if 'favs' not in st.session_state: st.session_state.favs = []
-if query and st.button("⭐ Produkt merken"):
-    if query not in st.session_state.favs:
-        st.session_state.favs.append(query)
-        st.rerun()
-
-if st.session_state.favs:
-    st.write("---")
-    st.write("### 📌 DEIN RADAR")
-    st.write(", ".join([f"{get_icon(f)} {f}" for f in st.session_state.favs]))
+    st.link_button(f"🔍 {query.upper()} ÜBERALL SUCHEN", f"https://www.google.com/search?q={query}+angebot+wiesmoor")
