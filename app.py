@@ -1,88 +1,82 @@
 import streamlit as st
-import pandas as pd
+import pd as pd
 
 # --- KONFIGURATION ---
-st.set_page_config(page_title="WIESMOOR SUPER-APP", page_icon="⛽", layout="centered")
+st.set_page_config(page_title="WIESMOOR GAS-RADAR", page_icon="💨", layout="centered")
 
-# --- DESIGN (Einfach & Stabil) ---
+# --- DESIGN ---
 st.markdown("""
 <style>
+    .stApp { background-color: #ffffff; }
     .header-bar {
-        background: #e2001a;
+        background: #0050aa; /* Blau für Gas-Thema */
         color: white; padding: 20px; text-align: center;
         border-radius: 0 0 20px 20px; font-weight: bold; font-size: 1.5rem;
         margin-bottom: 20px;
     }
-    .best-deal {
-        background-color: #28a745; color: white;
-        padding: 15px; border-radius: 10px; font-weight: bold;
-        display: flex; justify-content: space-between; margin-bottom: 10px;
+    .gas-card {
+        background-color: #f8f9fa; color: #333;
+        padding: 15px; border-radius: 12px;
+        display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 10px; border-left: 8px solid #0050aa;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
-    .other-deal {
-        background-color: #f1f1f1; color: #333;
-        padding: 10px; border-radius: 10px;
-        display: flex; justify-content: space-between; margin-bottom: 8px;
-        border-left: 5px solid #e2001a;
-    }
+    .best-price { border-left-color: #28a745; background-color: #e8f5e9; }
+    .price-val { font-size: 1.3rem; font-weight: bold; color: #0050aa; }
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<div class="header-bar">⛽ SPRIT- & DEAL-RADAR</div>', unsafe_allow_html=True)
+st.markdown('<div class="header-bar">💨 CNG & LPG RADAR WIESMOOR</div>', unsafe_allow_html=True)
 
-# --- TANKSTELLEN-DATEN ---
-tanks = [
-    {"Marke": "JET", "Ort": "Aurich", "E5": 1.76, "E10": 1.70, "Diesel": 1.58},
-    {"Marke": "SCORE", "Ort": "Friedeburg", "E5": 1.78, "E10": 1.72, "Diesel": 1.60},
-    {"Marke": "CLASSIC", "Ort": "Wiesmoor", "E5": 1.79, "E10": 1.73, "Diesel": 1.62},
-    {"Marke": "RAIFFEISEN", "Ort": "Wiesmoor", "E5": 1.80, "E10": 1.74, "Diesel": 1.64},
-    {"Marke": "AVIA", "Ort": "Wiesmoor", "E5": 1.82, "E10": 1.76, "Diesel": 1.65},
-    {"Marke": "ARAL", "Ort": "Uplengen", "E5": 1.85, "E10": 1.79, "Diesel": 1.69},
-    {"Marke": "SHELL", "Ort": "Remels", "E5": 1.87, "E10": 1.81, "Diesel": 1.71},
+# --- GAS-TANKSTELLEN DATEN (Beispiele Region Wiesmoor/Aurich) ---
+# Preise pro kg (CNG) oder pro Liter (LPG)
+gas_data = [
+    {"Name": "Raiffeisen", "Ort": "Wiesmoor", "LPG": 0.98, "CNG": 1.45},
+    {"Name": "AVIA", "Ort": "Wiesmoor", "LPG": 1.02, "CNG": None},
+    {"Name": "Stadtwerke", "Ort": "Aurich", "LPG": None, "CNG": 1.39},
+    {"Name": "Score", "Ort": "Emden", "LPG": 0.95, "CNG": 1.42},
+    {"Name": "Shell", "Ort": "Oldenburg", "LPG": 1.05, "CNG": 1.55}
 ]
-df = pd.DataFrame(tanks)
 
-# --- SPRIT-REITER ---
-tab1, tab2, tab3 = st.tabs(["🟢 E5", "🟡 E10", "⚫ Diesel"])
+import pandas as pd
+df = pd.DataFrame(gas_data)
 
-def liste_anzeigen(kraftstoff):
-    sorted_df = df.sort_values(by=kraftstoff)
-    for i, row in sorted_df.iterrows():
-        if i == sorted_df.index[0]: # Günstigster
-            st.markdown(f'<div class="best-deal"><span>🏆 {row["Marke"]} ({row["Ort"]})</span><span>{row[kraftstoff]:.2f} €</span></div>', unsafe_allow_html=True)
-        else:
-            st.markdown(f'<div class="other-deal"><span>📍 {row["Marke"]} ({row["Ort"]})</span><span>{row[kraftstoff]:.2f} €</span></div>', unsafe_allow_html=True)
+# --- TABS FÜR GAS-ARTEN ---
+tab1, tab2 = st.tabs(["💎 CNG (Erdgas)", "⛽ LPG (Autogas)"])
 
-with tab1: liste_anzeigen("E5")
-with tab2: liste_anzeigen("E10")
-with tab3: liste_anzeigen("Diesel")
+def show_gas(typ):
+    # Nur Tankstellen anzeigen, die diesen Kraftstoff führen
+    filtered = df[df[typ].notnull()].sort_values(by=typ)
+    
+    if filtered.empty:
+        st.warning(f"Keine aktuellen Daten für {typ} in der direkten Umgebung.")
+        return
 
-# --- SUCHE MIT SYMBOLEN ---
+    for i, row in filtered.iterrows():
+        is_first = (i == filtered.index[0])
+        extra_style = "best-price" if is_first else ""
+        einheit = "kg" if typ == "CNG" else "l"
+        
+        st.markdown(f"""
+        <div class="gas-card {extra_style}">
+            <div>
+                <b style="font-size:1.1rem;">{row['Name']}</b><br>
+                <small>{row['Ort']}</small>
+            </div>
+            <div class="price-val">{row[typ]:.2f} €/{einheit}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+with tab1:
+    st.write("### Aktuelle CNG-Preise (pro kg)")
+    show_gas("CNG")
+
+with tab2:
+    st.write("### Aktuelle LPG-Preise (pro Liter)")
+    show_gas("LPG")
+
+# --- SUCHE ---
 st.write("---")
-st.subheader("🔍 Produktsuche & Spar-Check")
-
-def get_icon(txt):
-    txt = txt.lower()
-    if "würst" in txt or "wiener" in txt: return "🌭"
-    if "käse" in txt: return "🧀"
-    if "kaffee" in txt: return "☕"
-    if "bier" in txt: return "🍺"
-    if "fleisch" in txt: return "🥩"
-    return "🔎"
-
-query = st.text_input("Was suchst du heute?")
+query = st.text_input("Günstiges Zubehör suchen?", placeholder="z.B. Adapter, Öl...")
 if query:
-    icon = get_icon(query)
-    st.markdown(f"### {icon} {query.upper()}")
-    c1, c2 = st.columns(2)
-    with c1: st.link_button("🔵 Lidl Shop", f"https://www.lidl.de/q/search?q={query}")
-    with c2: st.link_button("🅿️ Payback", f"https://www.google.com/search?q=Payback+{query}")
-
-# --- FAVORITEN ---
-if 'favs' not in st.session_state: st.session_state.favs = []
-if query and st.button("⭐ Merken"):
-    if query not in st.session_state.favs:
-        st.session_state.favs.append(query)
-        st.rerun()
-
-if st.session_state.favs:
-    st.write("📌 Merkliste:", ", ".join(st.session_state.favs))
+    st.link_button(f"🔍 {query} Preisvergleich", f"https://www.idealo.de/preisvergleich/MainSearchProductCategory.html?q={query}")
