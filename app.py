@@ -1,90 +1,76 @@
 import streamlit as st
 
 # --- KONFIGURATION ---
-st.set_page_config(page_title="🚨 DEAL-RADAR 🚨", page_icon="💥", layout="centered")
+st.set_page_config(page_title="DEAL-RADAR 3.0", page_icon="🧀", layout="centered")
 
-# --- STYLE ---
+# --- STYLE UPDATE (Moderner & Kontrastreicher) ---
 st.markdown("""
 <style>
-    .stApp { background-color: #ffffff; }
+    .stApp { background-color: #f4f7f6; }
     .header-bar {
-        background: linear-gradient(135deg, #e2001a, #ff4b4b);
+        background: linear-gradient(135deg, #e2001a, #b30014);
         color: white;
-        padding: 25px;
+        padding: 30px;
         text-align: center;
-        border-radius: 0 0 30px 30px;
+        border-radius: 0 0 40px 40px;
         font-weight: bold;
-        font-size: 1.8rem;
-        text-transform: uppercase;
-        box-shadow: 0 10px 20px rgba(226,0,26,0.3);
+        font-size: 2rem;
+        box-shadow: 0 10px 30px rgba(226,0,26,0.4);
     }
-    .favoriten-alarm {
-        background-color: #ff0000;
-        color: white;
-        padding: 15px;
+    .quick-btn {
+        background: white;
+        border: 2px solid #e2001a;
         border-radius: 15px;
+        padding: 10px;
         text-align: center;
-        font-weight: bold;
-        animation: blinker 1s linear infinite;
-        margin-bottom: 20px;
+        margin: 5px;
     }
-    @keyframes blinker { 50% { opacity: 0.5; } }
 </style>
 """, unsafe_allow_html=True)
 
-# --- FUNKTION: SYMBOLFINDER ---
+# --- FUNKTION: SYMBOL-AUTO-PILOT ---
 def get_icon(word):
     word = word.lower()
     icons = {
-        "würst": "🌭", "wiener": "🌭", "fleisch": "🥩",
-        "kaffee": "☕", "bohnen": "🫘",
-        "bier": "🍺", "cola": "🥤", "getränk": "🍹",
-        "brot": "🍞", "brötchen": "🥖",
-        "käse": "🧀", "milch": "🥛",
-        "werkzeug": "🛠️", "bohrer": "⚙️",
-        "obst": "🍎", "gemüse": "🥦", "pizza": "🍕",
-        "schokolade": "🍫", "eis": "🍦"
+        "käse": "🧀", "milch": "🥛", "fleisch": "🥩", "wurst": "🌭",
+        "kaffee": "☕", "bier": "🍺", "cola": "🥤", "pizza": "🍕",
+        "tanken": "⛽", "benzin": "⛽", "brot": "🍞", "ei": "🥚"
     }
     for key in icons:
-        if key in word:
-            return icons[key]
-    return "🔍" # Standard-Lupe, wenn nichts passt
+        if key in word: return icons[key]
+    return "🔎"
 
 # --- HEADER ---
-st.markdown('<div class="header-bar">💥 DEIN DEAL-RADAR 💥</div>', unsafe_allow_html=True)
+st.markdown('<div class="header-bar">💥 DEAL-RADAR 3.0</div>', unsafe_allow_html=True)
 
-# --- FAVORITEN-RADAR ---
-if 'favs' not in st.session_state:
-    st.session_state.favs = []
+# --- NEU: SCHNELLWAHL-LEISTE ---
+st.write("### ⚡ SCHNELL-CHECK")
+col_s1, col_s2, col_s3, col_s4 = st.columns(4)
+with col_s1: st.link_button("☕ Kaffee", "https://www.marktguru.de/search/Kaffee")
+with col_s2: st.link_button("🍺 Bier", "https://www.marktguru.de/search/Bier")
+with col_s3: st.link_button("⛽ Sprit", "https://www.clever-tanken.de/tankstelle_liste?ort=26639")
+with col_s4: st.link_button("🥩 Grillen", "https://www.marktguru.de/search/Fleisch")
 
-if st.session_state.favs:
-    st.markdown(f'<div class="favoriten-alarm">🚨 ALARM: Checke deine Favoriten!</div>', unsafe_allow_html=True)
-    cols = st.columns(len(st.session_state.favs) if len(st.session_state.favs) < 4 else 4)
-    for idx, f in enumerate(st.session_state.favs):
-        with cols[idx % 4]:
-            st.info(f"{get_icon(f)} {f}")
-            if st.button("Check", key=f"check_{idx}"):
-                st.markdown(f'<meta http-equiv="refresh" content="0;URL=https://www.marktguru.de/search/{f}">', unsafe_allow_html=True)
-
-# --- SUCHE MIT AUTO-SYMBOL ---
+# --- HAUPTSUCHE ---
 st.markdown("---")
-query = st.text_input("Was suchst du heute?", placeholder="z.B. Wiener Würstchen...")
+query = st.text_input("Was suchst du?", placeholder="z.B. Käse...")
 
 if query:
-    current_icon = get_icon(query)
-    st.markdown(f"### {current_icon} Deine Suche: {query.upper()}")
+    icon = get_icon(query)
+    st.markdown(f"## {icon} {query.upper()}")
     
-    search_term = query.replace(" ", "+")
-    
-    if st.button(f"⭐ '{query.upper()}' ZUM RADAR HINZUFÜGEN"):
-        if query not in st.session_state.favs:
-            st.session_state.favs.append(query)
-            st.rerun()
+    # Automatische Buttons für die Suche
+    st.link_button(f"👉 {query} bei Lidl prüfen", f"https://www.lidl.de/q/search?q={query}")
+    st.link_button(f"👉 {query} im Prospekt finden", f"https://www.marktguru.de/search/{query}")
 
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        st.markdown(f"[🛒 Lidl Shop](https://www.lidl.de/q/search?q={search_term})")
-    with c2:
-        st.markdown(f"[🅿️ Payback](https://www.google.com/search?q=Payback+{search_term})")
-    with c3:
-        st.markdown(f"[⚖️ Idealo](https://www.idealo.de/preisvergleich/MainSearchProductCategory.html?q={search_term})")
+# --- FAVORITEN SPEICHER ---
+if 'favs' not in st.session_state: st.session_state.favs = []
+if query and st.button("⭐ Produkt merken"):
+    if query not in st.session_state.favs:
+        st.session_state.favs.append(query)
+        st.rerun()
+
+if st.session_state.favs:
+    st.write("---")
+    st.write("### 📌 DEIN RADAR")
+    st.write(", ".join([f"{get_icon(f)} {f}" for f in st.session_state.favs]))
