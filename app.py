@@ -2,57 +2,87 @@ import streamlit as st
 import pandas as pd
 
 # --- KONFIGURATION ---
-st.set_page_config(page_title="WIESMOOR TANK-RADAR", page_icon="⛽", layout="centered")
+st.set_page_config(page_title="WIESMOOR SUPER-APP", page_icon="⛽", layout="centered")
 
-# --- HIGH-ATTENTION CSS ---
+# --- DESIGN (Einfach & Stabil) ---
 st.markdown("""
 <style>
-    .stApp { background-color: #f9f9f9; }
     .header-bar {
-        background: linear-gradient(135deg, #e2001a, #b30014);
+        background: #e2001a;
         color: white; padding: 20px; text-align: center;
-        border-radius: 0 0 30px 30px; font-weight: bold; font-size: 1.5rem;
+        border-radius: 0 0 20px 20px; font-weight: bold; font-size: 1.5rem;
+        margin-bottom: 20px;
     }
-    .tank-card {
-        padding: 15px; border-radius: 15px; margin-bottom: 12px;
-        color: white; font-weight: bold; display: flex; 
-        justify-content: space-between; align-items: center;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    .best-deal {
+        background-color: #28a745; color: white;
+        padding: 15px; border-radius: 10px; font-weight: bold;
+        display: flex; justify-content: space-between; margin-bottom: 10px;
     }
-    .best-price { background: linear-gradient(90deg, #28a745, #2ecc71); border-left: 8px solid #1e7e34; }
-    .normal-price { background: linear-gradient(90deg, #e2001a, #ff4b4b); border-left: 8px solid #a71d2a; }
-    .price-tag { font-size: 1.4rem; background: rgba(0,0,0,0.25); padding: 5px 12px; border-radius: 10px; min-width: 80px; text-align: center; }
+    .other-deal {
+        background-color: #f1f1f1; color: #333;
+        padding: 10px; border-radius: 10px;
+        display: flex; justify-content: space-between; margin-bottom: 8px;
+        border-left: 5px solid #e2001a;
+    }
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<div class="header-bar">⛽ SPRIT-RADAR WIESMOOR</div>', unsafe_allow_html=True)
+st.markdown('<div class="header-bar">⛽ SPRIT- & DEAL-RADAR</div>', unsafe_allow_html=True)
 
-# --- TANKSTELLEN DATEN ---
+# --- TANKSTELLEN-DATEN ---
 tanks = [
-    {"Name": "CLASSIC", "Ort": "Wiesmoor", "E5": 1.79, "E10": 1.73, "Diesel": 1.62},
-    {"Name": "AVIA", "Ort": "Wiesmoor", "E5": 1.82, "E10": 1.76, "Diesel": 1.65},
-    {"Name": "RAIFFEISEN", "Ort": "Wiesmoor", "E5": 1.80, "E10": 1.74, "Diesel": 1.64},
-    {"Name": "SCORE", "Ort": "Friedeburg", "E5": 1.78, "E10": 1.72, "Diesel": 1.60},
-    {"Name": "ARAL", "Ort": "Uplengen", "E5": 1.85, "E10": 1.79, "Diesel": 1.69},
-    {"Name": "SHELL", "Ort": "Remels", "E5": 1.87, "E10": 1.81, "Diesel": 1.71},
-    {"Name": "JET", "Ort": "Aurich", "E5": 1.77, "E10": 1.71, "Diesel": 1.59},
+    {"Marke": "JET", "Ort": "Aurich", "E5": 1.76, "E10": 1.70, "Diesel": 1.58},
+    {"Marke": "SCORE", "Ort": "Friedeburg", "E5": 1.78, "E10": 1.72, "Diesel": 1.60},
+    {"Marke": "CLASSIC", "Ort": "Wiesmoor", "E5": 1.79, "E10": 1.73, "Diesel": 1.62},
+    {"Marke": "RAIFFEISEN", "Ort": "Wiesmoor", "E5": 1.80, "E10": 1.74, "Diesel": 1.64},
+    {"Marke": "AVIA", "Ort": "Wiesmoor", "E5": 1.82, "E10": 1.76, "Diesel": 1.65},
+    {"Marke": "ARAL", "Ort": "Uplengen", "E5": 1.85, "E10": 1.79, "Diesel": 1.69},
+    {"Marke": "SHELL", "Ort": "Remels", "E5": 1.87, "E10": 1.81, "Diesel": 1.71},
 ]
-
 df = pd.DataFrame(tanks)
 
-# --- REITER FÜR KRAFTSTOFFARTEN ---
-tab1, tab2, tab3 = st.tabs(["🟢 Super E5", "🟡 Super E10", "⚫ Diesel"])
+# --- SPRIT-REITER ---
+tab1, tab2, tab3 = st.tabs(["🟢 E5", "🟡 E10", "⚫ Diesel"])
 
-def show_gas_stations(fuel):
-    # Nach Preis sortieren
-    sorted_df = df.sort_values(by=fuel)
-    best_id = sorted_df.index[0]
-    
+def liste_anzeigen(kraftstoff):
+    sorted_df = df.sort_values(by=kraftstoff)
     for i, row in sorted_df.iterrows():
-        is_best = (i == best_id)
-        card_class = "best-price" if is_best else "normal-price"
-        
-        st.markdown(f"""
-        <div class="tank-card {card_class}">
-            <div>
-                <span style="font-size:1
+        if i == sorted_df.index[0]: # Günstigster
+            st.markdown(f'<div class="best-deal"><span>🏆 {row["Marke"]} ({row["Ort"]})</span><span>{row[kraftstoff]:.2f} €</span></div>', unsafe_allow_html=True)
+        else:
+            st.markdown(f'<div class="other-deal"><span>📍 {row["Marke"]} ({row["Ort"]})</span><span>{row[kraftstoff]:.2f} €</span></div>', unsafe_allow_html=True)
+
+with tab1: liste_anzeigen("E5")
+with tab2: liste_anzeigen("E10")
+with tab3: liste_anzeigen("Diesel")
+
+# --- SUCHE MIT SYMBOLEN ---
+st.write("---")
+st.subheader("🔍 Produktsuche & Spar-Check")
+
+def get_icon(txt):
+    txt = txt.lower()
+    if "würst" in txt or "wiener" in txt: return "🌭"
+    if "käse" in txt: return "🧀"
+    if "kaffee" in txt: return "☕"
+    if "bier" in txt: return "🍺"
+    if "fleisch" in txt: return "🥩"
+    return "🔎"
+
+query = st.text_input("Was suchst du heute?")
+if query:
+    icon = get_icon(query)
+    st.markdown(f"### {icon} {query.upper()}")
+    c1, c2 = st.columns(2)
+    with c1: st.link_button("🔵 Lidl Shop", f"https://www.lidl.de/q/search?q={query}")
+    with c2: st.link_button("🅿️ Payback", f"https://www.google.com/search?q=Payback+{query}")
+
+# --- FAVORITEN ---
+if 'favs' not in st.session_state: st.session_state.favs = []
+if query and st.button("⭐ Merken"):
+    if query not in st.session_state.favs:
+        st.session_state.favs.append(query)
+        st.rerun()
+
+if st.session_state.favs:
+    st.write("📌 Merkliste:", ", ".join(st.session_state.favs))
