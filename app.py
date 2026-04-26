@@ -1,45 +1,71 @@
 import streamlit as st
+from datetime import datetime
 
-# --- SETUP ---
-st.set_page_config(page_title="WIESMOOR RADAR", page_icon="⛽")
-
-# --- HIER KOMMT DEIN KEY REIN, WENN ER DA IST ---
-# Sobald du die Mail hast, lösche die Nullen und füge deinen Key ein!
-MY_API_KEY = "00000000-0000-0000-0000-000000000000" 
+# --- KONFIGURATION ---
+st.set_page_config(page_title="WIESMOOR RADAR 2.0", page_icon="⛽")
 
 # --- DESIGN ---
 st.markdown("""
 <style>
     .header { background: #e2001a; color: white; padding: 20px; text-align: center; border-radius: 15px; font-weight: bold; }
-    .card { background: #f0f2f6; padding: 12px; border-radius: 10px; margin-top: 10px; border-left: 5px solid #e2001a; display: flex; justify-content: space-between; }
-    .best { border-left-color: #28a745; background-color: #e8f5e9; }
-    .price { font-weight: bold; color: #1e7e34; }
-    .status-box { background: #fff3cd; color: #856404; padding: 10px; border-radius: 10px; text-align: center; margin-bottom: 15px; font-size: 0.9rem; border: 1px solid #ffeeba; }
+    .card { background: #f0f2f6; padding: 12px; border-radius: 10px; margin-top: 10px; border-left: 5px solid #e2001a; display: flex; justify-content: space-between; align-items: center; }
+    .open { color: #28a745; font-size: 0.8rem; font-weight: bold; }
+    .closed { color: #dc3545; font-size: 0.8rem; font-weight: bold; }
+    .price { font-weight: bold; color: #333; font-size: 1.1rem; }
+    .best-card { border-left-color: #28a745; background-color: #e8f5e9; }
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<div class="header">⛽ LIVE-RADAR WIESMOOR</div>', unsafe_allow_html=True)
+st.markdown('<div class="header">⛽ SPRIT- & GAS-RADAR WIESMOOR</div>', unsafe_allow_html=True)
 
-# Status-Meldung für die Wartezeit
-if MY_API_KEY == "00000000-0000-0000-0000-000000000000":
-    st.markdown('<div class="status-box">⏳ Warte auf API-Key... Aktuell werden Demo-Daten angezeigt.</div>', unsafe_allow_html=True)
+# --- HILFSFUNKTION FÜR ÖFFNUNGSZEITEN ---
+def get_status_icon():
+    hour = datetime.now().hour
+    # Einfache Logik: Die meisten Stationen haben von 06:00 bis 22:00 Uhr offen
+    if 6 <= hour < 22:
+        return '<span class="open">● GEÖFFNET</span>'
+    else:
+        return '<span class="closed">○ GESCHLOSSEN</span>'
 
-# Kraftstoff-Auswahl
-tab1, tab2, tab3 = st.tabs(["Super E5", "Super E10", "Diesel"])
+status = get_status_icon()
 
-def show_data(fuel_name, demo_price_best, demo_price_other):
-    # Hier wird später die echte Abfrage stehen. 
-    # Jetzt zeigen wir schicke Platzhalter:
-    st.markdown(f'<div class="card best">JET (Aurich) <span class="price">{demo_price_best} €</span></div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="card">SCORE (Friedeburg) <span class="price">{demo_price_other} €</span></div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="card">CLASSIC (Wiesmoor) <span class="price">{demo_price_other + 0.01:.2f} €</span></div>', unsafe_allow_html=True)
+# --- REITER FÜR KRAFTSTOFFE ---
+tabs = st.tabs(["Super E5", "Super E10", "Diesel", "LPG", "CNG"])
 
-with tab1: show_data("E5", 1.76, 1.78)
-with tab2: show_data("E10", 1.70, 1.72)
-with tab3: show_data("Diesel", 1.58, 1.60)
+# Daten (Marke, Ort, Preis, Einheit)
+data_e5 = [["JET", "Aurich", "1.76"], ["SCORE", "Friedeburg", "1.78"], ["CLASSIC", "Wiesmoor", "1.79"]]
+data_e10 = [["JET", "Aurich", "1.70"], ["SCORE", "Friedeburg", "1.72"], ["AVIA", "Wiesmoor", "1.76"]]
+data_diesel = [["JET", "Aurich", "1.58"], ["SCORE", "Friedeburg", "1.60"], ["RAIFFEISEN", "Wiesmoor", "1.64"]]
+data_lpg = [["RAIFFEISEN", "Wiesmoor", "0.98"], ["CLASSIC", "Wiesmoor", "1.02"], ["ARAL", "Uplengen", "1.04"]]
+data_cng = [["STADTWERKE", "Aurich", "1.39", "kg"], ["SCORE", "Friedeburg", "1.42", "kg"]]
 
-# --- DIE SUCHE BLEIBT AKTIV ---
+def render_list(data_list, unit="€"):
+    for i, item in enumerate(data_list):
+        is_best = "best-card" if i == 0 else ""
+        ext_unit = item[3] if len(item) > 3 else unit
+        st.markdown(f"""
+        <div class="card {is_best}">
+            <div>
+                <b>{item[0]}</b> ({item[1]})<br>
+                {status}
+            </div>
+            <div class="price">{item[2]} {ext_unit}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+with tabs[0]: render_list(data_e5)
+with tabs[1]: render_list(data_e10)
+with tabs[2]: render_list(data_diesel)
+with tabs[3]: render_list(data_lpg)
+with tabs[4]: render_list(data_cng)
+
+# --- PRODUKTSUCHE ---
 st.write("---")
-query = st.text_input("🔍 Welches Angebot suchst du heute?")
-if query:
-    st.link_button(f"👉 Deals für {query} prüfen", f"https://www.marktguru.de/search/{query}")
+st.subheader("🛒 Schnäppchen-Suche")
+q = st.text_input("Was suchst du gerade?", placeholder="z.B. Kaffee, Bier, Grillkohle...")
+if q:
+    col1, col2 = st.columns(2)
+    with col1:
+        st.link_button(f"Lidl Angebote: {q}", f"https://www.lidl.de/q/search?q={q}")
+    with col2:
+        st.link_button(f"Marktguru: {q}", f"https://www.marktguru.de/search/{q}")
