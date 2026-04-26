@@ -1,68 +1,93 @@
 import streamlit as st
 
 # --- KONFIGURATION ---
-st.set_page_config(page_title="MEIN SPAR-CENTER", page_icon="💳")
+st.set_page_config(page_title="SPAR-CENTER PRO", page_icon="💳", layout="centered")
 
-# --- STYLE ---
+# --- APP-STYLE (Dein Screenshot-Look) ---
 st.markdown("""
 <style>
-    .stApp { background-color: #f8f9fa; }
-    .card {
-        background: white;
-        padding: 20px;
-        border-radius: 15px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    .stApp { background-color: #ffffff; }
+    
+    /* Blaue Header-Bar */
+    .header-bar {
+        background-color: #0050aa;
+        color: white;
+        padding: 15px;
+        text-align: center;
+        border-radius: 0 0 15px 15px;
+        font-weight: bold;
         margin-bottom: 20px;
-        border-top: 5px solid #0050aa;
     }
-    .payback { border-top: 5px solid #0091ff; }
-    .lidl { border-top: 5px solid #e2001a; }
+
+    /* Coupon-Karten wie im Screenshot */
+    .coupon-box {
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 10px;
+        background: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    /* Untere Navigationsleiste Simulation */
+    .nav-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: white;
+        border-top: 1px solid #ddd;
+        display: flex;
+        justify-content: space-around;
+        padding: 10px 0;
+        z-index: 100;
+    }
+    .nav-item { text-align: center; color: #666; font-size: 0.7rem; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- HAUPTBEREICH ---
-st.title("💳 MEIN SPAR-CENTER")
-st.write("Deine Schaltzentrale für Lidl Plus & Payback")
+# --- HEADER ---
+st.markdown('<div class="header-bar">MEIN SPAR-CENTER 2.0</div>', unsafe_allow_html=True)
 
-# --- VERKNÜPFUNGS-SECTION ---
+# --- COUPON BEREICH (Nachbau deines Bildes) ---
+st.subheader("Deine Top-Coupons")
+
 col1, col2 = st.columns(2)
-
 with col1:
-    st.markdown("""
-    <div class="card lidl">
-        <h3 style="color: #0050aa;">💙 Lidl Plus</h3>
-        <p style="font-size: 0.8rem; color: #666;">Aktuelle Prospekte & Shop</p>
-    </div>
-    """, unsafe_allow_html=True)
-    # Dieser Link führt zur stabilen Prospekt-Übersicht
-    st.link_button("Lidl Prospekte", "https://www.lidl.de/c/online-prospekte/s10005610")
-
+    st.link_button("🔵 LIDL PLUS AKTIVIEREN", "https://www.lidl.de/c/online-prospekte/s10005610", use_container_width=True)
 with col2:
-    st.markdown("""
-    <div class="card payback">
-        <h3 style="color: #0091ff;">🅿️ Payback</h3>
-        <p style="font-size: 0.8rem; color: #666;">Punkte & Aktivierung</p>
+    st.link_button("🅿️ PAYBACK COUPONS", "https://www.payback.de/coupons", use_container_width=True)
+
+st.markdown("""
+<div class="coupon-box">
+    <div>
+        <b style="color:#e2001a;">OTTO DEAL</b><br>
+        <small>Extra-Punkte auf Mode & Technik</small>
     </div>
-    """, unsafe_allow_html=True)
-    st.link_button("Payback Coupons", "https://www.payback.de/coupons")
+    <div style="color:#0050aa; font-weight:bold;">AKTIV</div>
+</div>
+""", unsafe_allow_html=True)
 
+# --- SUCHE ---
 st.markdown("---")
-
-# --- INTELLIGENTE SUCHE ---
-query = st.text_input("Produkt suchen:", placeholder="z.B. Kaffee, Werkzeug...")
+query = st.text_input("🔍 Produkt suchen:", placeholder="Was möchtest du heute sparen?")
 
 if query:
     search_term = query.replace(" ", "+")
-    st.subheader(f"Ergebnisse für {query}:")
-    
     c1, c2, c3 = st.columns(3)
-    
-    with c1:
-        # Direktsuche im Lidl Shop ist der sicherste Weg
-        st.markdown(f"[🛒 Im Lidl Shop](https://www.lidl.de/q/search?q={search_term})")
-        
-    with c2:
-        st.markdown(f"[🅿️ Payback Deals](https://www.google.com/search?q=Payback+Punkte+{search_term})")
+    with c1: st.markdown(f"[🛒 Lidl Shop](https://www.lidl.de/q/search?q={search_term})")
+    with c2: st.markdown(f"[🅿️ Payback Suche](https://www.google.com/search?q=Payback+{search_term})")
+    with c3: st.markdown(f"[⚖️ Idealo](https://www.idealo.de/preisvergleich/MainSearchProductCategory.html?q={search_term})")
 
-    with c3:
-        st.markdown(f"[⚖️ Idealo Check](https://www.idealo.de/preisvergleich/MainSearchProductCategory.html?q={search_term})")
+# --- UNTERE NAVI (Optik) ---
+st.markdown("""
+<div class="nav-bar">
+    <div class="nav-item">🕒<br>Aktuell</div>
+    <div class="nav-item" style="color:#0050aa;">🎟️<br>Coupons</div>
+    <div class="nav-item">💳<br>Karte</div>
+    <div class="nav-item">🛒<br>Shops</div>
+</div>
+<br><br>
+""", unsafe_allow_html=True)
