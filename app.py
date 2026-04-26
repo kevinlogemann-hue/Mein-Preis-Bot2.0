@@ -31,11 +31,11 @@ with col1:
     st.markdown("""
     <div class="card lidl">
         <h3 style="color: #0050aa;">💙 Lidl Plus</h3>
-        <p style="font-size: 0.8rem; color: #666;">Angebote & Highlights</p>
+        <p style="font-size: 0.8rem; color: #666;">Aktuelle Prospekte & Shop</p>
     </div>
     """, unsafe_allow_html=True)
-    # Neuer, stabiler Link zur allgemeinen Angebotsseite
-    st.link_button("Zu den Lidl Angeboten", "https://www.lidl.de/c/billiger-als-letztes-jahr/a10006323")
+    # Dieser Link führt zur stabilen Prospekt-Übersicht
+    st.link_button("Lidl Prospekte", "https://www.lidl.de/c/online-prospekte/s10005610")
 
 with col2:
     st.markdown("""
@@ -58,13 +58,11 @@ if query:
     c1, c2, c3 = st.columns(3)
     
     with c1:
-        # Direktsuche im Lidl Onlineshop (sehr stabil)
+        # Direktsuche im Lidl Shop ist der sicherste Weg
         st.markdown(f"[🛒 Im Lidl Shop](https://www.lidl.de/q/search?q={search_term})")
         
     with c2:
-        # Payback Partner Suche via Google
         st.markdown(f"[🅿️ Payback Deals](https://www.google.com/search?q=Payback+Punkte+{search_term})")
 
     with c3:
-        # Preisvergleich
         st.markdown(f"[⚖️ Idealo Check](https://www.idealo.de/preisvergleich/MainSearchProductCategory.html?q={search_term})")
