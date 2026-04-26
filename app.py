@@ -31,11 +31,11 @@ with col1:
     st.markdown("""
     <div class="card lidl">
         <h3 style="color: #0050aa;">💙 Lidl Plus</h3>
-        <p style="font-size: 0.8rem; color: #666;">Coupons & Prospekte</p>
+        <p style="font-size: 0.8rem; color: #666;">Angebote & Highlights</p>
     </div>
     """, unsafe_allow_html=True)
-    # Stabiler Link zur offiziellen Prospekt-Übersicht
-    st.link_button("Lidl Prospekte öffnen", "https://www.lidl.de/c/prospekte/s10007572")
+    # Neuer, stabiler Link zur allgemeinen Angebotsseite
+    st.link_button("Zu den Lidl Angeboten", "https://www.lidl.de/c/billiger-als-letztes-jahr/a10006323")
 
 with col2:
     st.markdown("""
@@ -58,7 +58,7 @@ if query:
     c1, c2, c3 = st.columns(3)
     
     with c1:
-        # Direktsuche im Lidl Onlineshop
+        # Direktsuche im Lidl Onlineshop (sehr stabil)
         st.markdown(f"[🛒 Im Lidl Shop](https://www.lidl.de/q/search?q={search_term})")
         
     with c2:
@@ -68,6 +68,3 @@ if query:
     with c3:
         # Preisvergleich
         st.markdown(f"[⚖️ Idealo Check](https://www.idealo.de/preisvergleich/MainSearchProductCategory.html?q={search_term})")
-
-st.markdown("---")
-st.caption("Tipp: Nutze diese App am Handy, um direkt in die installierten Apps zu springen.")
