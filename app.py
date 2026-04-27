@@ -10,7 +10,7 @@ API_KEY = "616cbb8e-9dde-4eb7-91f1-21a1663fa495"
 
 st.markdown('<div style="background:#e2001a;color:white;padding:20px;text-align:center;border-radius:15px;font-weight:bold;font-size:1.6rem;">⛽ WIESMOOR LIVE-RADAR</div>', unsafe_allow_html=True)
 
-# 2. STANDORT
+# 2. STANDORT-LOGIK
 if 'user_lat' not in st.session_state:
     st.session_state.user_lat, st.session_state.user_lng = 53.414, 7.733
     st.session_state.using_gps = False
@@ -35,9 +35,8 @@ stations = get_data(st.session_state.user_lat, st.session_state.user_lng)
 
 if stations:
     tabs = st.tabs(["Super E5", "Super E10", "Diesel", "🗺️ Karte"])
-    
-    # Listen-Ansicht für Kraftstoffe
     fuel_map = {"Super E5": "e5", "Super E10": "e10", "Diesel": "diesel"}
+    
     for i, label in enumerate(["Super E5", "Super E10", "Diesel"]):
         fuel_key = fuel_map[label]
         with tabs[i]:
@@ -48,22 +47,28 @@ if stations:
                     color = "#28a745" if s.get('isOpen') else "#888"
                     st.markdown(f'<div style="border-left:8px solid {color}; padding:10px; margin:5px 0; background:white; border-radius:10px; border:1px solid #ddd;"><b>{s.get("brand").upper()}</b><br>{s.get(fuel_key):.2f} € - {s.get("dist")} km</div>', unsafe_allow_html=True)
 
-    # 4. KARTEN-TAB (Robuste Version)
+    # 4. KARTEN-TAB (Jetzt mit Standort-Punkt & Namen)
     with tabs[3]:
+        # Karte erstellen
         m = folium.Map(location=[st.session_state.user_lat, st.session_state.user_lng], zoom_start=13)
         
+        # DEIN STANDORT (Blauer Punkt)
+        folium.Marker(
+            [st.session_state.user_lat, st.session_state.user_lng],
+            popup="Dein Standort",
+            icon=folium.Icon(color='blue', icon='info-sign')
+        ).add_to(m)
+        
+        # TANKSTELLEN (Rote/Graue Zapfsäulen)
         for s in stations:
-            # Einfacher Name für das Popup/Tooltip
             name = str(s.get("brand"))
-            price_info = f"E5: {s.get('e5')} €"
-            
             folium.Marker(
                 location=[s["lat"], s["lng"]],
                 tooltip=name,
-                popup=f"{name} ({price_info})",
+                popup=name,
                 icon=folium.Icon(color='red' if s.get('isOpen') else 'gray', icon='gas-pump', prefix='fa')
             ).add_to(m)
             
         st_folium(m, width=700, height=500, returned_objects=[])
 else:
-    st.info("Lade Daten...")
+    st.info("Suche Tankstellen...")
