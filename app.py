@@ -24,7 +24,6 @@ if stations:
     tabs = st.tabs(["Super E5", "Super E10", "Diesel", "🗺️ Karte"])
     fuel_map = {"Super E5": "e5", "Super E10": "e10", "Diesel": "diesel"}
     
-    # Preislisten-Tabs
     for i, label in enumerate(["Super E5", "Super E10", "Diesel"]):
         fuel_key = fuel_map[label]
         with tabs[i]:
@@ -32,12 +31,4 @@ if stations:
             sorted_stations = sorted(valid_stations, key=lambda x: x[fuel_key])
             if sorted_stations:
                 avg = sum(s[fuel_key] for s in sorted_stations) / len(sorted_stations)
-                st.info(f"📊 Durchschnittspreis: {avg:.2f} €")
-                for s in sorted_stations:
-                    name = s["brand"] if s.get("brand") else s["name"]
-                    is_decker = "decker" in (name + s.get("street", "")).lower()
-                    bg = "#eef6ff" if is_decker else "white"
-                    border = "#004a99" if is_decker else "#e2001a"
-                    st.markdown(f'''
-                    <div style="background:{bg}; padding:15px; border-radius:12px; margin-top:10px; border-left:8px solid {border}; display:flex; justify-content:space-between; align-items:center; box-shadow:2px 2px 5px rgba(0,0,0,0.1);">
-                        <div><b>{"⭐ " if is_decker else ""}{name}
+                st.info(f"📊 Durchschnitt: {avg:.2f}
