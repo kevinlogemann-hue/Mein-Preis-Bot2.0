@@ -59,32 +59,36 @@ if stations:
                     isOpen = s.get('isOpen', False)
                     price = s[fuel_key]
                     brand_name = s.get("brand", "Tankstelle").upper()
-                    # Logo-Logik: Wir nutzen einen Platzhalter, falls kein Logo da ist
-                    logo_url = f"https://creativecommons.tankerkoenig.de/img/stations/{s.get('id')}.png"
+                    
+                    # LOGO-LOGIK: Wir probieren das Tankerkönig-Bild, aber mit Fallback
+                    s_id = s.get('id')
+                    logo_url = f"https://creativecommons.tankerkoenig.de/img/stations/{s_id}.png"
                     
                     if isOpen:
                         card_style = "background:white; border-left:12px solid #28a745; opacity:1.0; box-shadow: 0 4px 12px rgba(0,0,0,0.1);"
                         p_color = "#28a745" if price < avg_price else "#000"
                         status = '<span style="color:#28a745; font-weight:bold;">● OFFEN</span>'
-                        img_filter = "" 
+                        img_style = "width:50px; height:50px; object-fit:contain; border-radius:5px;"
                     else:
                         card_style = "background:#f9f9f9; border-left:12px solid #ccc; opacity:0.4; filter: grayscale(100%);"
                         p_color = "#888"
                         status = '<span style="color:#888;">○ ZU</span>'
-                        img_filter = "filter: grayscale(100%);"
+                        img_style = "width:50px; height:50px; object-fit:contain; filter: grayscale(100%); opacity:0.6;"
 
                     st.markdown(f'''
                     <div style="{card_style} padding:15px; border-radius:12px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border: 1px solid #eee;">
-                        <div style="display:flex; align-items:center; gap:15px;">
-                            <img src="{logo_url}" onerror="this.style.display='none'" style="width:40px; height:40px; object-fit:contain; {img_filter}">
+                        <div style="display:flex; align-items:center; gap:20px;">
+                            <div style="background:#eee; width:55px; height:55px; display:flex; align-items:center; justify-content:center; border-radius:8px;">
+                                <img src="{logo_url}" onerror="this.src='https://cdn-icons-png.flaticon.com/512/483/483497.png'" style="{img_style}">
+                            </div>
                             <div>
-                                <b style="font-size:1.1rem; color:#333;">{brand_name}</b><br>
+                                <b style="font-size:1.15rem; color:#333;">{brand_name}</b><br>
                                 <small style="color:#666;">{s.get("street", "")}</small><br>
                                 {status}
                             </div>
                         </div>
                         <div style="text-align:right;">
-                            <b style="font-size:1.5rem; color:{p_color};">{price:.2f} €</b><br>
+                            <b style="font-size:1.6rem; color:{p_color};">{price:.2f} €</b><br>
                             <small style="color:#999;">{s.get("dist")} km</small>
                         </div>
                     </div>
@@ -98,3 +102,5 @@ if stations:
         for s in stations:
             folium.Marker([s["lat"], s["lng"]], tooltip=s["brand"], icon=folium.Icon(color='red' if s['isOpen'] else 'gray')).add_to(m)
         st_folium(m, width=700, height=500, returned_objects=[])
+else:
+    st.error("Keine Daten gefunden.")
