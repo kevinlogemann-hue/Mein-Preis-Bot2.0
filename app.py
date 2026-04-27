@@ -47,24 +47,25 @@ if stations:
                     color = "#28a745" if s.get('isOpen') else "#888"
                     st.markdown(f'<div style="border-left:8px solid {color}; padding:10px; margin:5px 0; background:white; border-radius:10px; border:1px solid #ddd;"><b>{s.get("brand").upper()}</b><br>{s.get(fuel_key):.2f} € - {s.get("dist")} km</div>', unsafe_allow_html=True)
 
-    # 4. KARTEN-TAB (Jetzt mit Standort-Punkt & Namen)
+    # 4. KARTEN-TAB (Mit Personen-Icon & Namen-Fix)
     with tabs[3]:
-        # Karte erstellen
         m = folium.Map(location=[st.session_state.user_lat, st.session_state.user_lng], zoom_start=13)
         
-        # DEIN STANDORT (Blauer Punkt)
+        # DEIN STANDORT (Blaue Person)
         folium.Marker(
             [st.session_state.user_lat, st.session_state.user_lng],
-            popup="Dein Standort",
-            icon=folium.Icon(color='blue', icon='info-sign')
+            popup="Das bist du",
+            tooltip="Mein Standort",
+            icon=folium.Icon(color='blue', icon='user', prefix='fa')
         ).add_to(m)
         
-        # TANKSTELLEN (Rote/Graue Zapfsäulen)
+        # TANKSTELLEN
         for s in stations:
-            name = str(s.get("brand"))
+            name = str(s.get("brand")).upper()
+            # Tooltip sorgt dafür, dass der Name beim Berühren erscheint
             folium.Marker(
                 location=[s["lat"], s["lng"]],
-                tooltip=name,
+                tooltip=folium.Tooltip(name, permanent=False),
                 popup=name,
                 icon=folium.Icon(color='red' if s.get('isOpen') else 'gray', icon='gas-pump', prefix='fa')
             ).add_to(m)
