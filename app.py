@@ -1,7 +1,8 @@
 import streamlit as st
 import requests
 import pandas as pd
-import pydeck as pdk
+import folium
+from streamlit_folium import st_folium
 
 # 1. SETUP
 st.set_page_config(page_title="Wiesmoor Radar", page_icon="⛽", layout="centered")
@@ -24,15 +25,14 @@ if stations:
     tabs = st.tabs(["Super E5", "Super E10", "Diesel", "🗺️ Karte"])
     fuel_map = {"Super E5": "e5", "Super E10": "e10", "Diesel": "diesel"}
     
-    # Preislisten-Tabs
+    # Preislisten (Tabs 0-2) bleiben gleich
     for i, label in enumerate(["Super E5", "Super E10", "Diesel"]):
         fuel_key = fuel_map[label]
         with tabs[i]:
             valid = [s for s in stations if s.get(fuel_key) and s.get(fuel_key) > 0]
             sorted_s = sorted(valid, key=lambda x: x[fuel_key])
             if sorted_s:
-                avg = sum(s[fuel_key] for s in sorted_s) / len(sorted_s)
-                st.info(f"Durchschnitt: {avg:.2f} €")
+                st.info(f"Schnitt: {sum(s[fuel_key] for s in sorted_s)/len(sorted_s):.2f} €")
                 for s in sorted_s:
                     brand = s["brand"] if s.get("brand") else s["name"]
                     is_decker = "decker" in (brand + s.get("street", "")).lower()
@@ -45,45 +45,38 @@ if stations:
                     </div>
                     ''', unsafe_allow_html=True)
 
-    # 3. INTERAKTIVE KARTE
+    # 3. DIE NEUE, STABILE KARTE (FOLIUM)
     with tabs[3]:
-        st.subheader("Interaktive Übersicht")
-        map_data = []
+        st.subheader("Übersicht & Navigation")
+        
+        # Startpunkt der Karte (Wiesmoor)
+        m = folium.Map(location=[53.414, 7.733], zoom_start=11, control_scale=True)
+        
         for s in stations:
-            brand = s["brand"] if s.get("brand") else s["name"]
+            name = s["brand"] if s.get("brand") else s["name"]
             dist = s.get("dist", 0)
-            # Link für Google Maps
-            gmaps_link = f"https://www.google.com/maps/search/?api=1&query={s['lat']},{s['lng']}"
+            gmaps_url = f"https://www.google.com/maps/search/?api=1&query={s['lat']},{s['lng']}"
             
-            map_data.append({
-                "name": brand,
-                "lat": s["lat"],
-                "lon": s["lng"],
-                "distance": f"{dist} km",
-                "link": gmaps_link
-            })
-        df = pd.DataFrame(map_data)
-
-        st.pydeck_chart(pdk.Deck(
-            map_style='mapbox://styles/mapbox/streets-v11',
-            initial_view_state=pdk.ViewState(latitude=53.414, longitude=7.733, zoom=11),
-            tooltip={
-                "html": "<b>{name}</b><br>Entfernung: {distance}<br><a href='{link}' target='_blank' style='color:white;'>📍 In Google Maps öffnen</a>",
-                "style": {"backgroundColor": "#e2001a", "color": "white"}
-            },
-            layers=[
-                pdk.Layer(
-                    "ScatterplotLayer", df, get_position='[lon, lat]',
-                    get_color='[226, 0, 26, 200]', get_radius=250, pickable=True
-                ),
-                pdk.Layer(
-                    "TextLayer", df, get_position='[lon, lat]', get_text='name',
-                    get_size=18, get_color=[0, 0, 0], get_alignment_baseline="'bottom'",
-                    background=True, get_background_color=[255, 255, 255, 180], pickable=True
-                )
-            ]
-        ))
-        st.caption("Tipp: Klicke auf einen Namen für Details und Google Maps Link.")
+            # Info-Fenster (Popup) Design
+            popup_html = f'''
+                <div style="font-family: Arial; min-width: 150px;">
+                    <h4 style="margin-bottom:5px;">{name}</h4>
+                    <p style="margin:0;">Entfernung: {dist} km</p>
+                    <br>
+                    <a href="{gmaps_url}" target="_blank" style="background:#e2001a; color:white; padding:8px; border-radius:5px; text-decoration:none; display:inline-block;">📍 Zu Google Maps</a>
+                </div>
+            '''
+            
+            # Marker zur Karte hinzufügen
+            folium.Marker(
+                [s["lat"], s["lng"]],
+                popup=folium.Popup(popup_html, max_width=250),
+                tooltip=name,
+                icon=folium.Icon(color='red', icon='info-sign')
+            ).add_to(m)
+        
+        # Karte anzeigen
+        st_folium(m, width=700, height=500)
 
 else:
     st.error("Daten konnten nicht geladen werden.")
