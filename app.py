@@ -11,19 +11,19 @@ API_KEY = "616cbb8e-9dde-4eb7-91f1-21a1663fa495"
 
 st.markdown('<div style="background:linear-gradient(90deg, #e2001a, #b10014);color:white;padding:20px;text-align:center;border-radius:15px;font-weight:bold;font-size:1.6rem;">⛽ WIESMOOR LIVE-RADAR</div>', unsafe_allow_html=True)
 
-# STANDORT-ABFRAGE
+# 2. STANDORT-ABFRAGE (Hier lag der kleine Fehler)
 st.write("")
+# Wir fragen den Browser nach den Koordinaten
 loc = streamlit_js_eval(js_expressions='done(list(navigator.geolocation.getCurrentPosition(pos => { const {latitude, longitude} = pos.coords; done({latitude, longitude}) })))', key='get_location')
 
-# Falls Standort gefunden, nutzen wir diesen, sonst Zentrum Wiesmoor
-if loc and 'latitude' in loc:
+if loc and isinstance(loc, dict) and 'latitude' in loc:
     USER_LAT, USER_LNG = loc['latitude'], loc['longitude']
-    st.success(f"📍 Position erkannt! Suche im Umkreis von dir.")
+    st.success(f"📍 Position erkannt! Preise werden für deinen Standort berechnet.")
 else:
-    USER_LAT, USER_LNG = 53.414, 7.733 # Standard: Marktplatz Wiesmoor
-    st.info("ℹ️ Nutze Standard-Position (Wiesmoor Zentrum). Für GPS bitte Standort am Handy freigeben.")
+    USER_LAT, USER_LNG = 53.414, 7.733 # Standard Wiesmoor
+    st.info("ℹ️ Nutze Standard-Position (Wiesmoor). Für GPS bitte den Zugriff im Browser erlauben.")
 
-# 2. DATEN LADEN (Mit dynamischen Koordinaten)
+# 3. DATEN LADEN
 def get_data(lat, lng):
     url = f"https://creativecommons.tankerkoenig.de/json/list.php?lat={lat}&lng={lng}&rad=15&sort=dist&type=all&apikey={API_KEY}"
     try:
@@ -45,35 +45,36 @@ if stations:
                 sorted_s = sorted(valid, key=lambda x: (not x['isOpen'], x[fuel_key]))
                 avg_price = sum(s[fuel_key] for s in sorted_s) / len(sorted_s)
                 
+                st.markdown(f"💡 **Durchschnittspreis: {avg_price:.2f} €**")
+                
                 for s in sorted_s:
                     name_display = s["brand"] if s.get("brand") else s["name"]
                     price = s[fuel_key]
                     trend = "📉" if price < avg_price else "📈"
                     price_color = "#28a745" if price < avg_price else "#000000"
-                    opacity = "1.0" if s['isOpen'] else "0.5"
+                    opacity = "1.0" if s['isOpen'] else "0.6"
                     
                     st.markdown(f'''
-                    <div style="background:white; padding:12px; border-radius:12px; margin-top:8px; border: 1px solid #eee; display:flex; justify-content:space-between; align-items:center; opacity:{opacity}; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                    <div style="background:white; padding:12px; border-radius:12px; margin-top:8px; border: 1px solid #eee; display:flex; justify-content:space-between; align-items:center; opacity:{opacity}; shadow: 0 2px 4px rgba(0,0,0,0.1);">
                         <div>
-                            <b>{name_display}</b><br>
-                            <small style="color:#666;">{s.get("street", "")}</small><br>
-                            <small style="color:{'#28a745' if s['isOpen'] else '#e2001a'}; font-size:0.7rem;">{'● OFFEN' if s['isOpen'] else '○ ZU'}</small>
+                            <b style="font-size:1.1rem;">{name_display}</b><br>
+                            <small>{s.get("street", "")}</small><br>
+                            <small style="color:{'#28a745' if s['isOpen'] else '#e2001a'};">{'● OFFEN' if s['isOpen'] else '○ GESCHLOSSEN'}</small>
                         </div>
                         <div style="text-align:right;">
-                            <span style="font-size:1.3rem; font-weight:bold; color:{price_color};">{price:.2f} €</span> {trend}<br>
-                            <small style="color:#999;">{s.get("dist")} km entfernt</small>
+                            <span style="font-size:1.2rem; font-weight:bold; color:{price_color};">{price:.2f} €</span> {trend}<br>
+                            <small style="color:#888;">{s.get("dist")} km</small>
                         </div>
                     </div>
                     ''', unsafe_allow_html=True)
 
-    # 3. KARTE
+    # 4. KARTE
     with tabs[3]:
-        # Karte zentriert auf USER_LAT/USER_LNG
         m = folium.Map(location=[USER_LAT, USER_LNG], zoom_start=12)
         
-        # Blauer Punkt für den Nutzer (falls GPS an)
+        # Markierung für dich selbst
         if loc:
-            folium.Marker([USER_LAT, USER_LNG], tooltip="Du bist hier", icon=folium.Icon(color='blue', icon='user', prefix='fa')).add_to(m)
+            folium.Marker([USER_LAT, USER_LNG], tooltip="Deine Position", icon=folium.Icon(color='blue', icon='user', prefix='fa')).add_to(m)
 
         for s in stations:
             brand = s["brand"] if s.get("brand") else s["name"]
