@@ -1,17 +1,17 @@
 import streamlit as st
 import requests
 
-# SETUP
+# 1. SETUP
 st.set_page_config(page_title="Wiesmoor Radar", page_icon="⛽")
 API_KEY = "616cbb8e-9dde-4eb7-91f1-21a1663fa495"
 
 st.markdown('<div style="background:#e2001a;color:white;padding:20px;text-align:center;border-radius:15px;font-weight:bold;font-size:1.4rem;">⛽ WIESMOOR LIVE-RADAR</div>', unsafe_allow_html=True)
 
-# DATEN LADEN (Cache deaktiviert für maximale Aktualität)
+# 2. DATEN-FUNKTION (Radius auf 20km erhöht für Decker)
 def get_live_data():
-    # Wir nehmen einen Radius von 15km, damit wir alles um Wiesmoor/Großefehn/Mullberg abdecken
-    url = f"https://creativecommons.tankerkoenig.de/json/list.php?lat=53.414&lng=7.733&rad=15&sort=dist&type=all&apikey={API_KEY}"
+    url = f"https://creativecommons.tankerkoenig.de/json/list.php?lat=53.414&lng=7.733&rad=20&sort=dist&type=all&apikey={API_KEY}"
     try:
+        # Wir erzwingen eine frische Abfrage ohne Zwischenspeicher
         r = requests.get(url, timeout=10).json()
         if r.get("ok"):
             return r["stations"]
@@ -26,24 +26,33 @@ if stations:
     
     def render_fuel(tab, fuel_type):
         with tab:
-            # Nur Stationen mit Preisen anzeigen und sortieren
             valid = [s for s in stations if s.get(fuel_type) and s.get(fuel_type) > 0]
+            # Sortierung: Günstigste zuerst
             sorted_list = sorted(valid, key=lambda x: x[fuel_type])
             
             for i, s in enumerate(sorted_list):
-                # Decker Check
-                name = s["brand"].upper()
-                is_decker = "DECKER" in name or "DECKER" in s["name"].upper()
+                # Wir suchen Decker im Namen ODER in der Adresse (Wittmunder Str.)
+                name_low = s["brand"].lower() + s["name"].lower()
+                is_decker = "decker" in name_low or "wittmunder" in s["street"].lower()
                 
-                # Design-Logik
+                # Styling
                 bg = "#f0fff4" if i == 0 else ("#eef6ff" if is_decker else "white")
                 border = "#28a745" if i == 0 else ("#004a99" if is_decker else "#e2001a")
-                star = "⭐ " if is_decker else ""
                 
+                # Decker bekommt einen Stern und wird hervorgehoben
+                star = "⭐ " if is_decker else ""
+                brand_name = s["brand"] if s["brand"] else s["name"]
+
                 st.markdown(f'''
                 <div style="background:{bg}; padding:15px; border-radius:12px; margin-top:10px; border-left:8px solid {border}; display:flex; justify-content:space-between; align-items:center; box-shadow:2px 2px 5px rgba(0,0,0,0.1);">
-                    <div><b>{star}{s["brand"]}</b><br><small>{s["place"]}, {s["street"]}</small></div>
-                    <div style="font-weight:bold; font-size:1.2rem;">{s[fuel_type]:.2f} €</div>
+                    <div>
+                        <b style="font-size:1.1rem;">{star}{brand_name}</b><br>
+                        <small>{s["place"]}, {s["street"]}</small>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-weight:bold; font-size:1.3rem;">{s[fuel_type]:.2f} €</div>
+                        <small style="color:gray;">{"Offen" if s["isOpen"] else "Zu"}</small>
+                    </div>
                 </div>
                 ''', unsafe_allow_html=True)
 
@@ -51,7 +60,15 @@ if stations:
     render_fuel(t2, "e10")
     render_fuel(t3, "diesel")
 else:
-    st.error("Warte kurz... Die Preise werden gerade aktualisiert. Bitte Seite in 10 Sekunden neu laden.")
+    st.warning("Suche läuft... Falls nichts erscheint, bitte die Seite einmal kurz neu laden.")
 
+# 3. SERVICE BEREICH
 st.write("---")
-st.info("Hinweis: Die Preise werden direkt von der Markttransparenzstelle gemeldet. Bei extremen Abweichungen (z.B. über 2€) liegt oft ein Übermittlungsfehler der Tankstelle vor.")
+st.subheader("🛠️ Wiesmoor Direkt-Hilfe")
+col1, col2 = st.columns(2)
+with col1:
+    if st.button("📞 Decker anrufen"):
+        st.success("04948 91990")
+with col2:
+    if st.button("🕒 Öffnungszeiten"):
+        st.info("Meist 6:00 - 21:00 Uhr")
