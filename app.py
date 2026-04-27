@@ -47,29 +47,39 @@ if stations:
                     color = "#28a745" if s.get('isOpen') else "#888"
                     st.markdown(f'<div style="border-left:8px solid {color}; padding:10px; margin:5px 0; background:white; border-radius:10px; border:1px solid #ddd;"><b>{s.get("brand").upper()}</b><br>{s.get(fuel_key):.2f} € - {s.get("dist")} km</div>', unsafe_allow_html=True)
 
-    # 4. KARTEN-TAB (Mit Personen-Icon & Namen-Fix)
+    # 4. KARTEN-TAB (Permanente Namen & Person)
     with tabs[3]:
         m = folium.Map(location=[st.session_state.user_lat, st.session_state.user_lng], zoom_start=13)
         
-        # DEIN STANDORT (Blaue Person)
+        # DEIN STANDORT (Personen-Icon)
         folium.Marker(
             [st.session_state.user_lat, st.session_state.user_lng],
-            popup="Das bist du",
-            tooltip="Mein Standort",
+            tooltip="Das bist du",
             icon=folium.Icon(color='blue', icon='user', prefix='fa')
         ).add_to(m)
         
-        # TANKSTELLEN
+        # TANKSTELLEN mit permanentem Label
         for s in stations:
-            name = str(s.get("brand")).upper()
-            # Tooltip sorgt dafür, dass der Name beim Berühren erscheint
+            brand_name = str(s.get("brand")).upper()
+            price_e5 = s.get('e5')
+            
+            # Wir erstellen ein permanentes Text-Label über dem Marker
+            folium.map.Marker(
+                [s["lat"], s["lng"]],
+                icon=folium.DivIcon(
+                    icon_size=(150,36),
+                    icon_anchor=(75,60),
+                    html=f'<div style="font-size: 10pt; color: black; font-weight: bold; text-align: center; background-color: rgba(255, 255, 255, 0.7); border-radius: 5px; padding: 2px;">{brand_name}</div>',
+                )
+            ).add_to(m)
+
+            # Der eigentliche Pin
             folium.Marker(
                 location=[s["lat"], s["lng"]],
-                tooltip=folium.Tooltip(name, permanent=False),
-                popup=name,
+                popup=f"{brand_name}: {price_e5}€",
                 icon=folium.Icon(color='red' if s.get('isOpen') else 'gray', icon='gas-pump', prefix='fa')
             ).add_to(m)
             
         st_folium(m, width=700, height=500, returned_objects=[])
 else:
-    st.info("Suche Tankstellen...")
+    st.info("Lade Daten...")
