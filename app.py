@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import pandas as pd
+import pydeck as pdk
 
 # 1. SETUP
 st.set_page_config(page_title="Wiesmoor Radar", page_icon="⛽")
@@ -20,11 +21,9 @@ def get_data():
 stations = get_data()
 
 if stations:
-    # Reiter erstellen: Jetzt mit Karte!
     tabs = st.tabs(["Super E5", "Super E10", "Diesel", "🗺️ Karte"])
     fuel_map = {"Super E5": "e5", "Super E10": "e10", "Diesel": "diesel"}
     
-    # Die ersten drei Tabs für die Preislisten
     for i, label in enumerate(["Super E5", "Super E10", "Diesel"]):
         fuel_key = fuel_map[label]
         with tabs[i]:
@@ -32,9 +31,8 @@ if stations:
             sorted_stations = sorted(valid_stations, key=lambda x: x[fuel_key])
             
             if sorted_stations:
-                # KLEINE STATISTIK
                 avg_price = sum(s[fuel_key] for s in sorted_stations) / len(sorted_stations)
-                st.write(f"📊 Durchschnittspreis in der Region: **{avg_price:.2f} €**")
+                st.info(f"📊 Durchschnittspreis: {avg_price:.2f} €")
                 
                 for s in sorted_stations:
                     name = s["brand"] if s.get("brand") else s["name"]
@@ -55,9 +53,11 @@ if stations:
                     </div>
                     ''', unsafe_allow_html=True)
 
-    # DER KARTEN-TAB
+    # DER KARTEN-TAB MIT NAMEN
     with tabs[3]:
-        st.subheader("Tankstellen in deiner Nähe")
+        st.subheader("Tankstellen-Standorte")
+        
+        # Daten für die Karte vorbereiten
         map_data = []
         for s in stations:
             map_data.append({
@@ -66,7 +66,35 @@ if stations:
                 "lon": s["lng"]
             })
         df = pd.DataFrame(map_data)
-        st.map(df) # Erstellt automatisch eine Google-Maps ähnliche Karte
+
+        # PyDeck Karte konfigurieren
+        view_state = pdk.ViewState(latitude=53.414, longitude=7.733, zoom=11, pitch=0)
+
+        # Layer 1: Die Punkte (rote Kreise)
+        layer_points = pdk.Layer(
+            "ScatterplotLayer",
+            df,
+            get_position='[lon, lat]',
+            get_color='[226, 0, 26, 160]',
+            get_radius=200,
+        )
+
+        # Layer 2: Die Namen als Text
+        layer_text = pdk.Layer(
+            "TextLayer",
+            df,
+            get_position='[lon, lat]',
+            get_text='name',
+            get_size=16,
+            get_color='[0, 0, 0, 255]',
+            get_alignment_baseline="'bottom'",
+        )
+
+        st.pydeck_chart(pdk.Deck(
+            layers=[layer_points, layer_text],
+            initial_view_state=view_state,
+            map_style='mapbox://styles/mapbox/light-v9'
+        ))
 
 else:
     st.error("Daten konnten nicht geladen werden.")
