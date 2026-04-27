@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import pandas as pd
+import pydeck as pdk
 
 # 1. SETUP
 st.set_page_config(page_title="Wiesmoor Radar", page_icon="⛽")
@@ -29,7 +30,7 @@ if stations:
             valid = [s for s in stations if s.get(fuel_key) and s.get(fuel_key) > 0]
             sorted_s = sorted(valid, key=lambda x: x[fuel_key])
             if sorted_s:
-                st.write(f"Schnitt: {sum(s[fuel_key] for s in sorted_s)/len(sorted_s):.2f} €")
+                st.info(f"Schnitt: {sum(s[fuel_key] for s in sorted_s)/len(sorted_s):.2f} €")
                 for s in sorted_s:
                     brand = s["brand"] if s.get("brand") else s["name"]
                     is_decker = "decker" in (brand + s.get("street", "")).lower()
@@ -38,29 +39,55 @@ if stations:
                     st.markdown(f'''
                     <div style="background:{bg}; padding:10px; border-radius:10px; margin-top:5px; border-left:5px solid {bc}; border: 1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
                         <div><b>{brand}</b><br><small>{s.get("street", "")}</small></div>
-                        <div style="text-align:right;"><b>{s[fuel_key]:.2f} €</b><br><small>{'●' if s['isOpen'] else '○'}</small></div>
+                        <div style="text-align:right;"><b>{s[fuel_key]:.2f} €</b><br><small>{'● Offen' if s['isOpen'] else '○ Zu'}</small></div>
                     </div>
                     ''', unsafe_allow_html=True)
 
-    # 3. STABILE KARTE (Funktioniert garantiert)
+    # 3. DIE "GOOGLE MAPS STYLE" KARTE
     with tabs[3]:
-        st.subheader("Standorte in der Übersicht")
-        map_data = []
+        st.subheader("Übersicht mit Namen")
+        map_list = []
         for s in stations:
-            map_data.append({
+            name = s["brand"] if s.get("brand") else s["name"]
+            map_list.append({
+                "name": name,
                 "lat": s["lat"],
-                "lon": s["lng"],
-                "name": s["brand"] if s.get("brand") else s["name"]
+                "lon": s["lng"]
             })
-        df = pd.DataFrame(map_data)
-        
-        # Die Standard-Map von Streamlit ist am stabilsten
-        st.map(df, size=20, color='#e2001a')
-        
-        # Liste der Standorte direkt darunter, falls man Namen sucht
-        st.write("---")
-        for m in map_data:
-            st.text(f"📍 {m['name']}")
+        df = pd.DataFrame(map_list)
 
+        # Karte konfigurieren
+        st.pydeck_chart(pdk.Deck(
+            map_style='mapbox://styles/mapbox/streets-v11', # Farbige Straßenkarte
+            initial_view_state=pdk.ViewState(
+                latitude=53.414, 
+                longitude=7.733, 
+                zoom=11,
+                pitch=0
+            ),
+            layers=[
+                # Die roten Punkte
+                pdk.Layer(
+                    "ScatterplotLayer",
+                    df,
+                    get_position='[lon, lat]',
+                    get_color='[226, 0, 26, 200]',
+                    get_radius=200,
+                ),
+                # Die Namen-Schilder
+                pdk.Layer(
+                    "TextLayer",
+                    df,
+                    get_position='[lon, lat]',
+                    get_text='name',
+                    get_size=18,
+                    get_color=[0, 0, 0, 255],
+                    get_alignment_baseline="'bottom'",
+                    background=True,
+                    get_background_color=[255, 255, 255, 180],
+                    padding=[2, 2]
+                )
+            ]
+        ))
 else:
     st.error("Daten konnten nicht geladen werden.")
