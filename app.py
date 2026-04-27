@@ -8,32 +8,22 @@ from streamlit_js_eval import streamlit_js_eval
 st.set_page_config(page_title="Wiesmoor Radar", page_icon="⛽", layout="centered")
 API_KEY = "616cbb8e-9dde-4eb7-91f1-21a1663fa495"
 
-st.markdown('<div style="background:linear-gradient(90deg, #e2001a, #b10014);color:white;padding:20px;text-align:center;border-radius:15px;font-weight:bold;font-size:1.6rem;box-shadow: 0 4px 10px rgba(0,0,0,0.2);">⛽ WIESMOOR LIVE-RADAR</div>', unsafe_allow_html=True)
+st.markdown('<div style="background:#e2001a;color:white;padding:20px;text-align:center;border-radius:15px;font-weight:bold;font-size:1.6rem;">⛽ WIESMOOR LIVE-RADAR</div>', unsafe_allow_html=True)
 
-# 2. STANDORT-LOGIK
+# 2. STANDORT
 if 'user_lat' not in st.session_state:
     st.session_state.user_lat, st.session_state.user_lng = 53.414, 7.733
     st.session_state.using_gps = False
 
-st.write("")
-c1, c2 = st.columns([3, 1])
+location = streamlit_js_eval(js_expressions='navigator.geolocation ? new Promise((resolve) => { navigator.geolocation.getCurrentPosition(pos => resolve({lat: pos.coords.latitude, lon: pos.coords.longitude}), () => resolve(null)) }) : null', key='get_loc')
 
-with c1:
-    msg = "📍 Fokus: Wiesmoor Zentrum" if not st.session_state.using_gps else "🎯 GPS-Standort aktiv"
-    st.info(msg)
+if st.button("📍 Meinen Standort nutzen"):
+    if location:
+        st.session_state.user_lat, st.session_state.user_lng = location['lat'], location['lon']
+        st.session_state.using_gps = True
+        st.rerun()
 
-with c2:
-    location = streamlit_js_eval(
-        js_expressions='navigator.geolocation ? new Promise((resolve) => { navigator.geolocation.getCurrentPosition(pos => resolve({lat: pos.coords.latitude, lon: pos.coords.longitude}), () => resolve(null)) }) : null',
-        key='get_loc'
-    )
-    if st.button("📍 GPS"):
-        if location:
-            st.session_state.user_lat, st.session_state.user_lng = location['lat'], location['lon']
-            st.session_state.using_gps = True
-            st.rerun()
-
-# 3. DATEN LADEN
+# 3. DATEN
 def get_data(lat, lng):
     url = f"https://creativecommons.tankerkoenig.de/json/list.php?lat={lat}&lng={lng}&rad=15&sort=dist&type=all&apikey={API_KEY}"
     try:
@@ -52,29 +42,30 @@ if stations:
         with tabs[i]:
             valid = [s for s in stations if s.get(fuel_key) and s.get(fuel_key) > 0]
             if valid:
-                avg_price = sum(s[fuel_key] for s in valid) / len(valid)
                 sorted_s = sorted(valid, key=lambda x: (not x['isOpen'], x[fuel_key]))
-                
                 for s in sorted_s:
                     isOpen = s.get('isOpen', False)
-                    price = s[fuel_key]
-                    brand_name = s.get("brand", "Tankstelle").upper()
-                    
-                    # LOGO LOGIK: Offizielles Logo oder schicker Platzhalter
-                    logo_url = f"https://creativecommons.tankerkoenig.de/img/stations/{s.get('id')}.png"
-                    fallback_icon = "https://cdn-icons-png.flaticon.com/512/483/483497.png"
-                    
-                    if isOpen:
-                        card_style = "background:white; border-left:12px solid #28a745; box-shadow: 0 4px 12px rgba(0,0,0,0.1);"
-                        p_color = "#28a745" if price < avg_price else "#000"
-                        status = '<b style="color:#28a745;">● OFFEN</b>'
-                        img_style = "filter: none;"
-                    else:
-                        card_style = "background:#f9f9f9; border-left:12px solid #ccc; opacity:0.5; filter: grayscale(100%);"
-                        p_color = "#888"
-                        status = '<b style="color:#888;">○ ZU</b>'
-                        img_style = "filter: grayscale(100%);"
+                    status_text = "● OFFEN" if isOpen else "○ ZU"
+                    color = "#28a745" if isOpen else "#888"
+                    # Wir nutzen Emojis als Logo-Ersatz für 100% Stabilität
+                    st.markdown(f"""
+                    <div style="border-left:8px solid {color}; padding:15px; margin:10px 0; background:white; border-radius:10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <span style="font-size:1.5rem;">⛽</span> <b>{s.get('brand','').upper()}</b><br>
+                            <small>{s.get('street','')}</small><br>
+                            <span style="color:{color}; font-weight:bold;">{status_text}</span>
+                        </div>
+                        <div style="text-align:right;">
+                            <span style="font-size:1.4rem; font-weight:bold;">{s[fuel_key]:.2f} €</span><br>
+                            <small>{s.get('dist')} km</small>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
 
-                    st.markdown(f'''
-                    <div style="{card_style} padding:15px; border-radius:12px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; border: 1px solid #eee;">
-                        <div style="display:flex; align-items:center; gap:15px;">
+    with tabs[3]:
+        m = folium.Map(location=[st.session_state.user_lat, st.session_state.user_lng], zoom_start=13)
+        if st.session_state.using_gps:
+            folium.Marker([st.session_state.user_lat, st.session_state.user_lng], icon=folium.Icon(color='blue', icon='user', prefix='fa')).add_to(m)
+        for s in stations:
+            folium.Marker([s["lat"], s["lng"]], tooltip=s["brand"], icon=folium.Icon(color='red' if s['isOpen'] else 'gray')).add_to(m)
+        st_folium(m, width=700, height=500, returned_objects=[])
