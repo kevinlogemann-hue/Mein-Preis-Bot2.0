@@ -1,64 +1,57 @@
 import streamlit as st
 import requests
 
-# 1. SETUP & KEY
+# SETUP
 st.set_page_config(page_title="Wiesmoor Radar", page_icon="⛽")
 API_KEY = "616cbb8e-9dde-4eb7-91f1-21a1663fa495"
 
-st.markdown('<div style="background:#e2001a;color:white;padding:20px;text-align:center;border-radius:15px;font-weight:bold;font-size:1.4rem;">⛽ WIESMOOR RADAR</div>', unsafe_allow_html=True)
+st.markdown('<div style="background:#e2001a;color:white;padding:20px;text-align:center;border-radius:15px;font-weight:bold;font-size:1.4rem;">⛽ WIESMOOR LIVE-RADAR</div>', unsafe_allow_html=True)
 
-# 2. DATEN-FUNKTION (Inklusive Decker-Suche)
-def get_prices():
-    # Wir vergrößern den Suchradius auf 12km, um sicherzugehen, dass Decker (Wittmunder Str.) dabei ist
-    url = f"https://creativecommons.tankerkoenig.de/json/list.php?lat=53.414&lng=7.733&rad=12&sort=dist&type=all&apikey={API_KEY}"
+# DATEN LADEN (Cache deaktiviert für maximale Aktualität)
+def get_live_data():
+    # Wir nehmen einen Radius von 15km, damit wir alles um Wiesmoor/Großefehn/Mullberg abdecken
+    url = f"https://creativecommons.tankerkoenig.de/json/list.php?lat=53.414&lng=7.733&rad=15&sort=dist&type=all&apikey={API_KEY}"
     try:
-        r = requests.get(url, timeout=5).json()
+        r = requests.get(url, timeout=10).json()
         if r.get("ok"):
-            return r["stations"], "LIVE"
+            return r["stations"]
     except:
-        pass
-    return [], "ERROR"
+        return None
+    return None
 
-stations, mode = get_prices()
+stations = get_live_data()
 
-# 3. ANZEIGE DER PREISE
-if mode == "LIVE":
+if stations:
     t1, t2, t3 = st.tabs(["Super E5", "Super E10", "Diesel"])
-
-    def show_fuel(tab, key):
+    
+    def render_fuel(tab, fuel_type):
         with tab:
-            # Sortieren nach Preis
-            liste = sorted([s for s in stations if s.get(key) and s.get(key) > 0], key=lambda x: x[key])
+            # Nur Stationen mit Preisen anzeigen und sortieren
+            valid = [s for s in stations if s.get(fuel_type) and s.get(fuel_type) > 0]
+            sorted_list = sorted(valid, key=lambda x: x[fuel_type])
             
-            for i, s in enumerate(liste):
-                # Markierung für Decker oder den günstigsten Preis
-                is_decker = "Decker" in s["brand"] or "Decker" in s["name"]
-                color = "#f0fff4" if i == 0 else "white"
-                # Falls Decker, bekommt die Karte einen blauen Rand, sonst grün/rot
-                border = "#004a99" if is_decker else ("#28a745" if i == 0 else "#e2001a")
+            for i, s in enumerate(sorted_list):
+                # Decker Check
+                name = s["brand"].upper()
+                is_decker = "DECKER" in name or "DECKER" in s["name"].upper()
                 
-                label = "⭐ FAVORIT: " if is_decker else ""
+                # Design-Logik
+                bg = "#f0fff4" if i == 0 else ("#eef6ff" if is_decker else "white")
+                border = "#28a745" if i == 0 else ("#004a99" if is_decker else "#e2001a")
+                star = "⭐ " if is_decker else ""
                 
                 st.markdown(f'''
-                <div style="background:{color}; padding:15px; border-radius:12px; margin-top:10px; border-left:8px solid {border}; display:flex; justify-content:space-between; align-items:center; box-shadow:2px 2px 5px rgba(0,0,0,0.1);">
-                    <div><b>{label}{s["brand"]}</b><br><small>{s["place"]}, {s["street"]}</small></div>
-                    <div style="font-weight:bold; font-size:1.2rem;">{s[key]:.2f} €</div>
+                <div style="background:{bg}; padding:15px; border-radius:12px; margin-top:10px; border-left:8px solid {border}; display:flex; justify-content:space-between; align-items:center; box-shadow:2px 2px 5px rgba(0,0,0,0.1);">
+                    <div><b>{star}{s["brand"]}</b><br><small>{s["place"]}, {s["street"]}</small></div>
+                    <div style="font-weight:bold; font-size:1.2rem;">{s[fuel_type]:.2f} €</div>
                 </div>
                 ''', unsafe_allow_html=True)
 
-    show_fuel(t1, "e5")
-    show_fuel(t2, "e10")
-    show_fuel(t3, "diesel")
+    render_fuel(t1, "e5")
+    render_fuel(t2, "e10")
+    render_fuel(t3, "diesel")
 else:
-    st.error("Preise konnten nicht geladen werden. Bitte Internetverbindung oder API-Key prüfen.")
+    st.error("Warte kurz... Die Preise werden gerade aktualisiert. Bitte Seite in 10 Sekunden neu laden.")
 
-# 4. SHOPPING & SERVICE
 st.write("---")
-st.subheader("🛠️ Wiesmoor Service & Shopping")
-if st.button("📞 Gebr. Decker anrufen"):
-    st.info("Rufnummer: 04948 91990")
-
-item = st.text_input("Suche bei Berends, Aldi & Co:", placeholder="z.B. Kaffee...")
-if item:
-    st.link_button(f"🏢 Kaufhaus Berends: {item}", f"https://www.google.com/search?q=Kaufhaus+Berends+Wiesmoor+{item}", use_container_width=True)
-    st.link_button(f"🔵 Aldi Nord: {item}", f"https://www.aldi-nord.de/suche.html?q={item}", use_container_width=True)
+st.info("Hinweis: Die Preise werden direkt von der Markttransparenzstelle gemeldet. Bei extremen Abweichungen (z.B. über 2€) liegt oft ein Übermittlungsfehler der Tankstelle vor.")
