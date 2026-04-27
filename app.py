@@ -31,22 +31,22 @@ if stations:
             sorted_s = sorted(valid, key=lambda x: x[fuel_key])
             if sorted_s:
                 avg = sum(s[fuel_key] for s in sorted_s) / len(sorted_s)
-                st.info(f"Durchschnittspreis: {avg:.2f} €")
+                st.info(f"Durchschnitt: {avg:.2f} €")
                 for s in sorted_s:
                     brand = s["brand"] if s.get("brand") else s["name"]
                     is_decker = "decker" in (brand + s.get("street", "")).lower()
                     bg = "#f0f7ff" if is_decker else "white"
                     bc = "#004a99" if is_decker else "#e2001a"
                     st.markdown(f'''
-                    <div style="background:{bg}; padding:12px; border-radius:10px; margin-top:8px; border-left:6px solid {bc}; display:flex; justify-content:space-between; align-items:center; border-right: 1px solid #eee; border-top: 1px solid #eee; border-bottom: 1px solid #eee;">
+                    <div style="background:{bg}; padding:12px; border-radius:10px; margin-top:8px; border-left:6px solid {bc}; display:flex; justify-content:space-between; align-items:center; border: 1px solid #eee; box-shadow: 1px 1px 3px rgba(0,0,0,0.05);">
                         <div><b>{brand}</b><br><small>{s.get("street", "")}</small></div>
                         <div style="text-align:right;"><b>{s[fuel_key]:.2f} €</b><br><small>{'● Offen' if s['isOpen'] else '● Zu'}</small></div>
                     </div>
                     ''', unsafe_allow_html=True)
 
-    # 3. VERBESSERTE KARTE
+    # 3. KARTEN-TAB (DARK MODE DESIGN)
     with tabs[3]:
-        st.subheader("Tankstellen-Radar")
+        st.subheader("Interaktives Tankstellen-Radar")
         m_data = []
         for s in stations:
             brand = s["brand"] if s.get("brand") else s["name"]
@@ -55,43 +55,45 @@ if stations:
                 "name": brand,
                 "lat": s["lat"],
                 "lon": s["lng"],
-                "color": [0, 100, 255] if is_fav else [255, 0, 0]
+                "color": [0, 150, 255] if is_fav else [255, 30, 30],
+                "radius": 220 if is_fav else 150
             })
         df = pd.DataFrame(m_data)
 
-        # Kartendesign: 'mapbox://styles/mapbox/streets-v11' für Farben oder 'satellite-streets-v11'
         st.pydeck_chart(pdk.Deck(
-            map_style='mapbox://styles/mapbox/streets-v11', 
+            map_style='mapbox://styles/mapbox/dark-v10', # Wechsel zu DARK MODE
             initial_view_state=pdk.ViewState(
                 latitude=53.414, 
                 longitude=7.733, 
-                zoom=12,
-                pitch=45 # Leicht schräge Ansicht für 3D-Effekt
+                zoom=11.5,
+                pitch=40
             ),
             layers=[
-                # Farbige Kreise
+                # Pulsierende Punkte (Scatterplot)
                 pdk.Layer(
                     "ScatterplotLayer",
                     df,
                     get_position='[lon, lat]',
                     get_color='color',
-                    get_radius=180,
-                    pickable=True
+                    get_radius='radius',
+                    pickable=True,
+                    opacity=0.8
                 ),
-                # Schicke Text-Labels mit weißem Hintergrund
+                # Kontrastreiche Text-Labels
                 pdk.Layer(
                     "TextLayer",
                     df,
                     get_position='[lon, lat]',
                     get_text='name',
                     get_size=20,
-                    get_color=[0, 0, 0],
+                    get_color=[255, 255, 255], # Weiße Schrift
                     get_alignment_baseline="'bottom'",
                     background=True,
-                    get_background_color=[255, 255, 255, 220],
-                    padding=[4, 4],
+                    get_background_color=[0, 0, 0, 160], # Schwarzer Hintergrund für Namen
+                    padding=[5, 5],
                 )
-            ]
+            ],
+            tooltip={"text": "{name}"}
         ))
 else:
     st.error("Daten konnten nicht geladen werden.")
