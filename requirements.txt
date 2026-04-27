@@ -4,3 +4,4 @@ pandas
 pydeck
 folium
 streamlit-folium
+streamlit-js-eval
