@@ -2,85 +2,66 @@ import streamlit as st
 import requests
 from streamlit_js_eval import streamlit_js_eval
 
-# 1. CLEAN UI-SETUP (Stabil & Freundlich)
+# 1. UI-SETUP & DESIGN
 st.set_page_config(page_title="Wiesmoor Radar", layout="centered")
 
 st.markdown("""
 <style>
     .hero-banner {
-        width: 100%;
-        height: 140px;
+        width: 100%; height: 140px;
         background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)), 
                     url('https://images.unsplash.com/photo-1527018601619-a508a2be00cd?q=80&w=1000');
-        background-size: cover;
-        background-position: center;
-        border-radius: 20px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 20px;
+        background-size: cover; background-position: center; border-radius: 20px;
+        display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 20px;
     }
     .hero-title { color: white; font-size: 2rem; font-weight: 900; margin: 0; }
     .hero-subtitle { color: #e0e0e0; font-size: 0.85rem; }
 
     .station-card {
-        background: white;
-        padding: 16px;
-        border-radius: 20px;
-        display: flex;
-        align-items: center;
-        border: 1px solid #eee;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.03);
-        margin-bottom: 8px;
+        background: white; padding: 16px; border-radius: 20px;
+        display: flex; align-items: center; border: 1px solid #eee;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.03); margin-bottom: 8px;
     }
-
     .brand-logo {
         width: 50px; height: 50px; border-radius: 12px;
         display: flex; align-items: center; justify-content: center;
         font-size: 1.4rem; font-weight: bold; flex-shrink: 0;
     }
+    .price-tag { margin-left: auto; font-size: 1.9rem; font-weight: 900; color: #000; }
 
-    .price-tag {
-        margin-left: auto; font-size: 1.9rem; font-weight: 900; color: #000;
-    }
-
-    /* Freundlicher Blau-Ton für Community-Aktionen */
+    /* Blaues Community-Button Design */
     div.stButton > button {
-        background-color: #f0f7ff !important;
-        color: #007bff !important;
-        border: 2px solid #007bff !important;
-        border-radius: 12px !important;
-        padding: 5px 15px !important;
-        font-size: 0.8rem !important;
-        font-weight: 700 !important;
-        margin-top: -12px !important;
-        margin-bottom: 25px !important;
+        background-color: #f0f7ff !important; color: #007bff !important;
+        border: 2px solid #007bff !important; border-radius: 12px !important;
+        padding: 5px 15px !important; font-size: 0.8rem !important;
+        font-weight: 700 !important; margin-top: -12px !important; margin-bottom: 25px !important;
     }
-    div.stButton > button:hover {
-        background-color: #007bff !important;
-        color: white !important;
-    }
+    div.stButton > button:hover { background-color: #007bff !important; color: white !important; }
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<div class="hero-banner"><div class="hero-title">WIESMOOR RADAR</div><div class="hero-subtitle">Echte Preise durch Community-Power</div></div>', unsafe_allow_html=True)
+st.markdown('<div class="hero-banner"><div class="hero-title">WIESMOOR RADAR</div><div class="hero-subtitle">Sortiere nach Preis oder Entfernung</div></div>', unsafe_allow_html=True)
 
-# 2. STANDORT & DATEN
+# 2. STANDORT & FILTER-BAR
 if 'lat' not in st.session_state:
     st.session_state.lat, st.session_state.lng = 53.414, 7.733
 
-col1, col2 = st.columns([2, 1])
-with col1:
-    if st.button("📍 Standort finden", use_container_width=True):
-        loc = streamlit_js_eval(js_expressions='navigator.geolocation ? new Promise((resolve) => { navigator.geolocation.getCurrentPosition(pos => resolve({lat: pos.coords.latitude, lon: pos.coords.longitude})) }) : null', key='gps_final')
+col_gps, col_rad, col_sort = st.columns([1.2, 0.8, 1.5])
+
+with col_gps:
+    if st.button("📍 GPS", use_container_width=True):
+        loc = streamlit_js_eval(js_expressions='navigator.geolocation ? new Promise((resolve) => { navigator.geolocation.getCurrentPosition(pos => resolve({lat: pos.coords.latitude, lon: pos.coords.longitude})) }) : null', key='gps_sort_fix')
         if loc:
             st.session_state.lat, st.session_state.lng = loc['lat'], loc['lon']
             st.rerun()
 
-with col2:
-    radius = st.selectbox("Umkreis", [5, 10, 20], index=0)
+with col_rad:
+    radius = st.selectbox("km", [5, 10, 20, 50], index=1)
 
+with col_sort:
+    sort_by = st.selectbox("Sortierung", ["Günstigste zuerst", "Nahgelegene zuerst"])
+
+# 3. DATEN ABARBEITEN
 API_KEY = "616cbb8e-9dde-4eb7-91f1-21a1663fa495"
 
 @st.cache_data(ttl=60)
@@ -92,44 +73,50 @@ def get_style(brand):
     b = (brand or "").lower()
     if "aral" in b: return {"bg": "#0070BB", "c": "white", "s": "A"}
     if "score" in b: return {"bg": "#FFD100", "c": "#E2001A", "s": "S"}
-    if "behrens" in b: return {"bg": "#5D4037", "c": "white", "s": "B"}
+    if "behrens" in b: return {"bg": "#5D40 brown", "c": "white", "s": "B"}
     return {"bg": "#e9ecef", "c": "#495057", "s": "⛽"}
 
-stations = get_stations(st.session_state.lat, st.session_state.lng, radius)
+raw_stations = get_stations(st.session_state.lat, st.session_state.lng, radius)
 
-# 3. ANZEIGE MIT NAMENS-SICHERHEIT
-if stations:
+# 4. ANZEIGE & SORTIER-LOGIK
+if raw_stations:
     tab1, tab2, tab3 = st.tabs(["Super E5", "Super E10", "Diesel"])
     fuels = {"Super E5": "e5", "Super E10": "e10", "Diesel": "diesel"}
 
-    for i, (label, key) in enumerate(fuels.items()):
+    for i, (label, fuel_key) in enumerate(fuels.items()):
         with [tab1, tab2, tab3][i]:
-            for s in stations:
-                price = s.get(key)
-                if price:
-                    # SICHERER NAME (Brand -> Name -> Fallback)
-                    name = s.get('brand') or s.get('name') or "Tankstelle"
-                    dist = s.get('dist', 0)
-                    ui = get_style(name)
-                    
-                    st.markdown(f"""
-                    <div class="station-card">
-                        <div class="brand-logo" style="background-color: {ui['bg']}; color: {ui['c']};">
-                            {ui['s']}
-                        </div>
-                        <div style="margin-left: 15px;">
-                            <div style="font-weight: 800; font-size: 1rem;">{name.upper()}</div>
-                            <div style="color: #888; font-size: 0.75rem;">{s.get('street')} ({dist} km)</div>
-                        </div>
-                        <div class="price-tag">{price:.2f}€</div>
+            # Nur Stationen mit Preis für diesen Kraftstoff
+            valid_stations = [s for s in raw_stations if s.get(fuel_key)]
+            
+            # SORTIERUNG ANWENDEN
+            if sort_by == "Günstigste zuerst":
+                sorted_list = sorted(valid_stations, key=lambda x: x.get(fuel_key))
+            else:
+                sorted_list = sorted(valid_stations, key=lambda x: x.get('dist'))
+
+            for s in sorted_list:
+                price = s.get(fuel_key)
+                name = s.get('brand') or s.get('name') or "Tankstelle"
+                ui = get_style(name)
+                
+                st.markdown(f"""
+                <div class="station-card">
+                    <div class="brand-logo" style="background-color: {ui['bg']}; color: {ui['c']};">
+                        {ui['s']}
                     </div>
-                    """, unsafe_allow_html=True)
-                    
-                    if st.button(f"📸 Preis-Foto senden", key=f"fix_{s['id']}_{key}"):
-                        st.session_state[f"cam_{s['id']}"] = True
-                    
-                    if st.session_state.get(f"cam_{s['id']}"):
-                        st.success(f"Danke! Bitte lade ein Foto vom Preis bei {name} hoch:")
-                        st.file_uploader("Bild auswählen", type=['jpg', 'png'], key=f"up_{s['id']}")
+                    <div style="margin-left: 15px;">
+                        <div style="font-weight: 800; font-size: 1rem;">{name.upper()}</div>
+                        <div style="color: #888; font-size: 0.75rem;">{s.get('street')} ({s.get('dist')} km)</div>
+                    </div>
+                    <div class="price-tag">{price:.2f}€</div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                if st.button(f"📸 Preis-Foto senden", key=f"up_{s['id']}_{fuel_key}"):
+                    st.session_state[f"cam_{s['id']}"] = True
+                
+                if st.session_state.get(f"cam_{s['id']}"):
+                    st.info(f"Foto-Upload für {name} aktiviert.")
+                    st.file_uploader("Bild auswählen", type=['jpg', 'png'], key=f"file_{s['id']}")
 else:
-    st.info("Suche Tankstellen...")
+    st.info("Keine Stationen gefunden.")
