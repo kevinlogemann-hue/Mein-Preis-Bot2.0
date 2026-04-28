@@ -11,21 +11,30 @@ st.markdown("""
     .hero-banner {
         width: 100%;
         height: 150px;
-        background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6)), 
+        background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)), 
                     url('https://images.unsplash.com/photo-1527018601619-a508a2be00cd?q=80&w=1000');
         background-size: cover;
         background-position: center;
         border-radius: 20px;
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
-        margin-bottom: 15px;
+        margin-bottom: 20px;
+        text-align: center;
+        padding: 10px;
     }
     .hero-title {
         color: white;
-        font-size: 2.2rem;
+        font-size: 2rem;
         font-weight: 900;
-        letter-spacing: 1px;
+        margin: 0;
+    }
+    .hero-subtitle {
+        color: #ffccd1;
+        font-size: 0.9rem;
+        font-weight: 400;
+        margin-top: 5px;
     }
 
     /* Tankstellen Karten */
@@ -59,30 +68,35 @@ st.markdown("""
         color: #000;
     }
 
-    /* Foto-Buttons: "Preisschild bestätigen" */
+    /* Korrektur-Button: "Preis korrigieren" */
     div.stButton > button {
-        background-color: #ffffff !important;
-        color: #e2001a !important;
-        border: 1px solid #ffccd1 !important;
+        background-color: #f8f9fa !important;
+        color: #dc3545 !important;
+        border: 1px dashed #dc3545 !important;
         border-radius: 12px !important;
-        padding: 4px 12px !important;
-        font-size: 0.75rem !important;
-        font-weight: 600 !important;
+        padding: 5px 15px !important;
+        font-size: 0.8rem !important;
+        font-weight: 700 !important;
         margin-top: -10px !important;
-        margin-bottom: 20px !important;
-        transition: all 0.2s ease;
+        margin-bottom: 25px !important;
+        width: auto !important;
     }
     
     div.stButton > button:hover {
-        background-color: #fdf2f2 !important;
-        border-color: #e2001a !important;
-        transform: translateY(-1px);
+        background-color: #dc3545 !important;
+        color: white !important;
+        border-style: solid !important;
     }
 </style>
 """, unsafe_allow_html=True)
 
 # --- HEADER ---
-st.markdown('<div class="hero-banner"><div class="hero-title">WIESMOOR RADAR</div></div>', unsafe_allow_html=True)
+st.markdown("""
+<div class="hero-banner">
+    <div class="hero-title">WIESMOOR RADAR</div>
+    <div class="hero-subtitle">Preis falsch? Melde es der Community!</div>
+</div>
+""", unsafe_allow_html=True)
 
 # 2. STANDORT & FILTER
 if 'lat' not in st.session_state:
@@ -90,15 +104,14 @@ if 'lat' not in st.session_state:
 
 col1, col2 = st.columns([2, 1])
 with col1:
-    # Text-basiert statt Emojis im Code, um Syntax-Fehler zu vermeiden
-    if st.button("Meinen Standort finden", use_container_width=True):
+    if st.button("📍 Meinen Standort finden", use_container_width=True):
         loc = streamlit_js_eval(js_expressions='navigator.geolocation ? new Promise((resolve) => { navigator.geolocation.getCurrentPosition(pos => resolve({lat: pos.coords.latitude, lon: pos.coords.longitude})) }) : null', key='gps_radar')
         if loc:
             st.session_state.lat, st.session_state.lng = loc['lat'], loc['lon']
             st.rerun()
 
 with col2:
-    radius = st.selectbox("Umkreis", [5, 10, 20], index=0)
+    radius = st.selectbox("Umkreis (km)", [5, 10, 20, 50], index=0)
 
 # 3. DATEN
 API_KEY = "616cbb8e-9dde-4eb7-91f1-21a1663fa495"
@@ -106,7 +119,10 @@ API_KEY = "616cbb8e-9dde-4eb7-91f1-21a1663fa495"
 @st.cache_data(ttl=60)
 def get_stations(la, ln, rad):
     url = f"https://creativecommons.tankerkoenig.de/json/list.php?lat={la}&lng={ln}&rad={rad}&sort=dist&type=all&apikey={API_KEY}"
-    return requests.get(url).json().get("stations", [])
+    try:
+        return requests.get(url).json().get("stations", [])
+    except:
+        return []
 
 def get_brand_style(brand):
     b = brand.lower()
@@ -141,11 +157,13 @@ if data:
                     </div>
                     """, unsafe_allow_html=True)
                     
-                    # Neuer Button-Text für mehr Klarheit
-                    if st.button(f"📷 Preisschild bestätigen", key=f"verify_{s['id']}_{key}"):
+                    # Neuer Button für Korrekturen bei Abweichungen
+                    if st.button(f"⚠ Preis falsch? Korrigieren", key=f"fix_{s['id']}_{key}"):
                         st.session_state[f"cam_{s['id']}"] = True
                     
                     if st.session_state.get(f"cam_{s['id']}"):
-                        st.file_uploader("Foto vom Preismast hochladen", type=['jpg', 'png'], key=f"up_{s['id']}")
+                        with st.container():
+                            st.info("Bitte lade ein Foto der Preistafel hoch. Wir aktualisieren den Preis sofort für alle!")
+                            st.file_uploader("Foto der Preistafel auswählen", type=['jpg', 'jpeg', 'png'], key=f"up_{s['id']}")
 else:
-    st.info("Suche nach Tankstellen in Wiesmoor...")
+    st.warning("Keine Tankstellen im gewählten Umkreis gefunden.")
