@@ -1,156 +1,161 @@
 import streamlit as st
 import requests
 from streamlit_js_eval import streamlit_js_eval
-from datetime import datetime
 
-# 1. DAS DESIGN-SYSTEM (Originalgetreue Markenfarben)
+# 1. ERWEITERTES DESIGN-SYSTEM
 st.set_page_config(page_title="Wiesmoor Radar", layout="centered")
 
 st.markdown("""
 <style>
-    /* Header & Info Box */
-    .header-banner {
-        width: 100%;
-        height: 160px;
-        background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1527018601619-a508a2be00cd?q=80&w=1000&auto=format&fit=crop');
-        background-size: cover;
-        background-position: center;
+    /* Haupt-Header mit Glas-Effekt */
+    .main-header {
+        background: linear-gradient(135deg, #e2001a 0%, #b30014 100%);
+        color: white;
+        padding: 25px;
+        border-radius: 20px;
+        text-align: center;
+        margin-bottom: 20px;
+        box-shadow: 0 10px 20px rgba(226, 0, 26, 0.2);
+    }
+    .header-title { font-size: 2.4rem; font-weight: 900; letter-spacing: -1px; margin: 0; }
+    
+    /* Community Power Box */
+    .community-box {
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+        padding: 15px;
         border-radius: 15px;
         display: flex;
         align-items: center;
-        justify-content: center;
-        border-bottom: 5px solid #e2001a;
-    }
-    .header-text {
-        color: white;
-        font-size: 2.2rem;
-        font-weight: 900;
-        text-shadow: 2px 2px 8px rgba(0,0,0,0.8);
-    }
-    
-    /* Station Card Style */
-    .station-container {
-        background: #ffffff;
-        padding: 16px;
-        border-radius: 18px;
-        border: 1px solid #eef0f2;
-        display: flex;
-        align-items: center;
-        margin-bottom: 12px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.03);
+        gap: 15px;
+        margin-bottom: 25px;
     }
 
-    /* Icon-Boxen mit Markenfarben */
-    .logo-box {
-        width: 52px;
-        height: 52px;
-        border-radius: 10px;
+    /* Hochwertige Brand-Icons */
+    .brand-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 16px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.6rem;
-        font-weight: 900;
-        margin-right: 16px;
+        font-size: 1.8rem;
+        font-weight: 800;
+        box-shadow: inset 0 -4px 0 rgba(0,0,0,0.1), 0 4px 10px rgba(0,0,0,0.1);
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
         flex-shrink: 0;
     }
+
+    /* Stations-Karte */
+    .station-card {
+        background: white;
+        padding: 20px;
+        border-radius: 20px;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+        border: 1px solid #f1f3f5;
+    }
     
-    .price-text {
+    .price-tag {
         margin-left: auto;
-        font-size: 1.9rem;
+        font-size: 2.1rem;
         font-weight: 900;
         color: #1a1a1a;
+        letter-spacing: -1px;
+    }
+
+    /* Beleg-Button Style */
+    .beleg-btn {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 12px;
+        background: #fff;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        color: #495057;
+        margin-top: 8px;
+        cursor: pointer;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# 2. BRAND DEFINITIONS (Abgleich mit offiziellen Webseiten)
-def get_brand_identity(brand_name):
-    bn = brand_name.lower()
-    
-    # ARAL: Hellblau (Sky Blue) & Weiß
-    if "aral" in bn:
+# 2. BRAND IDENTITIES (Hochwertige Farbprofile)
+def get_brand_style(name):
+    name = name.lower()
+    if "aral" in name:
         return {"bg": "#0070BB", "color": "#FFFFFF", "icon": "A", "border": "none"}
-    
-    # SCORE: Gelber Hintergrund (#FFD100), Rote Schrift & Rand (#E2001A)
-    elif "score" in bn:
-        return {"bg": "#FFD100", "color": "#E2001A", "icon": "S", "border": "3px solid #E2001A"}
-    
-    # BEHRENS: Braun-Töne für das Bären-Logo
-    elif "behrens" in bn:
-        return {"bg": "#5D4037", "color": "#FFFFFF", "icon": "🐻", "border": "none"}
-    
-    # SHELL: Gelber Grund (#FBCE07), Roter Rand (#D50000)
-    elif "shell" in bn:
-        return {"bg": "#FBCE07", "color": "#D50000", "icon": "S", "border": "2px solid #D50000"}
-    
-    # JET: Rein-Gelb (#FFD200), Blaue Schrift (#003399)
-    elif "jet" in bn:
+    if "score" in name:
+        return {"bg": "#FFD100", "color": "#E2001A", "icon": "S", "border": "2px solid #E2001A"}
+    if "behrens" in name:
+        return {"bg": "#5D4037", "color": "#FFFFFF", "icon": "B", "border": "none"}
+    if "q1" in name:
+        return {"bg": "#FFFFFF", "color": "#E30613", "icon": "Q1", "border": "2px solid #E30613"}
+    if "jet" in name:
         return {"bg": "#FFD200", "color": "#003399", "icon": "J", "border": "none"}
-    
-    # ESSO: Rot (#EF3340) & Weiß
-    elif "esso" in bn:
-        return {"bg": "#EF3340", "color": "#FFFFFF", "icon": "E", "border": "none"}
-
-    # Q1: Weißer Grund, Rote Schrift & dicker Rand
-    elif "q1" in bn:
-        return {"bg": "#FFFFFF", "color": "#E30613", "icon": "Q1", "border": "3px solid #E30613"}
-    
-    # TOTAL: Orange/Rot Verlauf (hier Orange #FF5900)
-    elif "total" in bn:
-        return {"bg": "#FF5900", "color": "#FFFFFF", "icon": "T", "border": "none"}
-    
-    # Standard für Unbekannte
     return {"bg": "#455A64", "color": "#FFFFFF", "icon": "⛽", "border": "none"}
 
-# --- LOGIK ---
-st.markdown('<div class="header-banner"><div class="header-text">WIESMOOR RADAR</div></div>', unsafe_allow_html=True)
+# --- UI START ---
+st.markdown('<div class="main-header"><p class="header-title">⛽ WIESMOOR LIVE-RADAR</p></div>', unsafe_allow_html=True)
 
-if 'lat' not in st.session_state: 
-    st.session_state.lat, st.session_state.lng = 53.414, 7.733
+# Community Power Hinweis
+st.markdown("""
+<div class="community-box">
+    <div style="font-size: 2rem;">📸</div>
+    <div>
+        <div style="font-weight: 800; color: #1a1a1a;">Community-Power:</div>
+        <div style="color: #6c757d; font-size: 0.9rem;">Lade ein Foto hoch, um die Preise für alle aktuell zu halten!</div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
-col1, col2 = st.columns(2)
-with col1:
-    if st.button("📍 Mein Standort"):
-        loc = streamlit_js_eval(js_expressions='navigator.geolocation ? new Promise((resolve) => { navigator.geolocation.getCurrentPosition(pos => resolve({lat: pos.coords.latitude, lon: pos.coords.longitude})) }) : null', key='gps_v5')
+# Standort & Refresh
+col_gps, col_ref = st.columns(2)
+with col_gps:
+    if st.button("📍 Standort ermitteln", use_container_width=True):
+        loc = streamlit_js_eval(js_expressions='navigator.geolocation ? new Promise((resolve) => { navigator.geolocation.getCurrentPosition(pos => resolve({lat: pos.coords.latitude, lon: pos.coords.longitude})) }) : null', key='gps_v6')
         if loc:
             st.session_state.lat, st.session_state.lng = loc['lat'], loc['lon']
             st.rerun()
-with col2:
-    if st.button("🔄 Preise laden"):
+
+with col_ref:
+    if st.button("🔄 Preise laden", use_container_width=True):
         st.cache_data.clear()
         st.rerun()
 
+# API Abruf
 API_KEY = "616cbb8e-9dde-4eb7-91f1-21a1663fa495"
+if 'lat' not in st.session_state: st.session_state.lat, st.session_state.lng = 53.414, 7.733
+
 @st.cache_data(ttl=60)
-def fetch_data(la, ln):
-    try:
-        url = f"https://creativecommons.tankerkoenig.de/json/list.php?lat={la}&lng={ln}&rad=10&sort=dist&type=all&apikey={API_KEY}"
-        return requests.get(url).json().get("stations", [])
-    except: return []
+def fetch_stations(la, ln):
+    url = f"https://creativecommons.tankerkoenig.de/json/list.php?lat={la}&lng={ln}&rad=10&sort=dist&type=all&apikey={API_KEY}"
+    return requests.get(url).json().get("stations", [])
 
-stations = fetch_data(st.session_state.lat, st.session_state.lng)
+stations = fetch_stations(st.session_state.lat, st.session_state.lng)
 
-if stations:
-    fuel_tabs = st.tabs(["Super E5", "Super E10", "Diesel"])
-    keys = ["e5", "e10", "diesel"]
+# Tabs für Kraftstoffe
+t1, t2, t3 = st.tabs(["Super E5", "Super E10", "Diesel"])
+fuel_map = {"e5": t1, "e10": t2, "diesel": t3}
 
-    for i, fuel in enumerate(keys):
-        with fuel_tabs[i]:
-            for s in stations:
-                price = s.get(fuel)
-                if price:
-                    brand_style = get_brand_identity(s.get('brand', ''))
-                    st.markdown(f"""
-                    <div class="station-container">
-                        <div class="logo-box" style="background-color: {brand_style['bg']}; color: {brand_style['color']}; border: {brand_style['border']};">
-                            {brand_style['icon']}
-                        </div>
-                        <div>
-                            <div style="font-weight:bold; font-size:1.1rem; color:#111;">{s.get('brand', 'Tankstelle').upper()}</div>
-                            <div style="color:#777; font-size:0.8rem;">{s.get('street')}</div>
-                        </div>
-                        <div class="price-text">{price:.2f}€</div>
+for fuel_key, tab in fuel_map.items():
+    with tab:
+        for s in stations:
+            price = s.get(fuel_key)
+            if price:
+                style = get_brand_style(s.get('brand', ''))
+                st.markdown(f"""
+                <div class="station-card">
+                    <div class="brand-icon" style="background-color: {style['bg']}; color: {style['color']}; border: {style['border']};">
+                        {style['icon']}
                     </div>
-                    """, unsafe_allow_html=True)
-else:
-    st.warning("Keine Daten gefunden.")
+                    <div style="margin-left: 15px;">
+                        <div style="font-weight: 800; font-size: 1.1rem; color: #1a1a1a;">{s.get('brand', 'Tankstelle').upper()}</div>
+                        <div style="color: #adb5bd; font-size: 0.85rem;">{s.get('street')}</div>
+                        <div class="beleg-btn">📸 Beleg senden</div>
+                    </div>
+                    <div class="price-tag">{price:.2f}€</div>
+                </div>
+                """, unsafe_allow_html=True)
