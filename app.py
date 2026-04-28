@@ -6,17 +6,17 @@ from streamlit_js_eval import streamlit_js_eval
 from datetime import datetime
 from PIL import Image
 
-# 1. SETUP & VERBESSERTES DESIGN
+# 1. SETUP & DESIGN
 st.set_page_config(page_title="Wiesmoor Radar", page_icon="⛽", layout="centered")
 
 st.markdown("""
     <style>
-    /* Der stabilere Retro-Header */
+    /* Der neue Retro-Header */
     .header-container {
         position: relative;
         width: 100%;
         height: 150px;
-        background: #e2001a; /* Fallback Farbe Rot */
+        background: #e2001a;
         background-image: url('https://images.unsplash.com/photo-1527018601619-a508a2be00cd?q=80&w=1000&auto=format&fit=crop');
         background-size: cover;
         background-position: center;
@@ -24,12 +24,12 @@ st.markdown("""
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-bottom: 20px;
+        margin-bottom: 5px;
         border: 2px solid #c10016;
     }
     
     .header-overlay {
-        background: rgba(226, 0, 26, 0.4); /* Roter Schimmer über dem Bild */
+        background: rgba(180, 0, 0, 0.4); 
         width: 100%;
         height: 100%;
         border-radius: 13px;
@@ -47,13 +47,13 @@ st.markdown("""
         letter-spacing: 1px;
     }
 
-    /* Community-Box Styling */
-    .community-box {
-        background-color: #f0f2f6;
-        border-radius: 10px;
-        padding: 10px;
-        margin-top: 5px;
-        border-left: 5px solid #e2001a;
+    /* Styling für die Community-Box */
+    .community-info {
+        color: #555;
+        font-size: 0.9rem;
+        font-style: italic;
+        margin-bottom: 15px;
+        text-align: center;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -67,7 +67,8 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-st.caption("📍 Echtzeit-Preise für Wiesmoor & Umgebung")
+# Hier ist dein gewünschter Text wieder da!
+st.markdown('<div class="community-info">📸 Mache Fotos für die Community für die Echtzeit</div>', unsafe_allow_html=True)
 
 # --- API & LOGIK ---
 API_KEY = "616cbb8e-9dde-4eb7-91f1-21a1663fa495"
@@ -77,16 +78,16 @@ if 'user_reports' not in st.session_state:
 if 'lat' not in st.session_state:
     st.session_state.lat, st.session_state.lng = 53.414, 7.733
 
-# Buttons
+# Buttons für Standort und Refresh
 col_a, col_b = st.columns(2)
 with col_a:
-    loc = streamlit_js_eval(js_expressions='navigator.geolocation ? new Promise((resolve) => { navigator.geolocation.getCurrentPosition(pos => resolve({lat: pos.coords.latitude, lon: pos.coords.longitude})) }) : null', key='gps_final_v4')
+    loc = streamlit_js_eval(js_expressions='navigator.geolocation ? new Promise((resolve) => { navigator.geolocation.getCurrentPosition(pos => resolve({lat: pos.coords.latitude, lon: pos.coords.longitude})) }) : null', key='gps_v5')
     if st.button("📍 Standort"):
         if loc:
             st.session_state.lat, st.session_state.lng = loc['lat'], loc['lon']
             st.rerun()
 with col_b:
-    if st.button("🔄 Update"):
+    if st.button("🔄 Aktualisieren"):
         st.cache_data.clear()
         st.rerun()
 
@@ -103,8 +104,7 @@ stations = fetch_now(st.session_state.lat, st.session_state.lng)
 
 # Liste anzeigen
 if stations:
-    tab_labels = ["Super E5", "Super E10", "Diesel"]
-    tabs = st.tabs(tab_labels)
+    tabs = st.tabs(["Super E5", "Super E10", "Diesel"])
     fuels = {"Super E5": "e5", "Super E10": "e10", "Diesel": "diesel"}
 
     for i, (label, key) in enumerate(fuels.items()):
@@ -126,21 +126,22 @@ if stations:
                 </div>
                 """, unsafe_allow_html=True)
 
-                # Melde-Button dezent darunter
-                if st.button(f"📸 Foto-Beleg senden", key=f"btn_{sid}_{key}"):
-                    st.session_state[f"up_{sid}"] = True
+                # Melde-Funktion
+                c1, c2 = st.columns([1,1])
+                if c1.button(f"📸 Beleg senden", key=f"up_btn_{sid}_{key}"):
+                    st.session_state[f"show_up_{sid}"] = True
                 
-                if st.session_state.get(f"up_{sid}"):
-                    up = st.file_uploader("Preistafel fotografieren", type=['jpg','png'], key=f"f_{sid}")
+                if st.session_state.get(f"show_up_{sid}"):
+                    up = st.file_uploader("Foto hochladen", type=['jpg','png'], key=f"file_{sid}")
                     if up:
                         st.session_state.user_reports[sid] = {"time": datetime.now().strftime("%H:%M"), "img": Image.open(up)}
-                        del st.session_state[f"up_{sid}"]
+                        del st.session_state[f"show_up_{sid}"]
                         st.rerun()
 
                 if sid in st.session_state.user_reports:
                     rep = st.session_state.user_reports[sid]
-                    st.info(f"✅ Bestätigt um {rep['time']} Uhr (Klick für Foto)")
-                    if st.button("Beleg öffnen", key=f"show_{sid}_{key}"):
+                    st.success(f"✅ Foto-Update von {rep['time']} Uhr")
+                    if st.button("Foto ansehen", key=f"view_{sid}_{key}"):
                         st.image(rep['img'])
 else:
-    st.warning("Suche Tankstellen...")
+    st.info("Suche nach Tankstellen in Wiesmoor...")
