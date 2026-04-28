@@ -11,7 +11,34 @@ st.set_page_config(page_title="Wiesmoor Radar", page_icon="⛽", layout="centere
 
 st.markdown("""
     <style>
-    /* Die Community-Box */
+    /* Der neue, bild-basierte Header */
+    .retro-header {
+        position: relative;
+        background-color: #e2001a;
+        color: white;
+        border-radius: 15px;
+        overflow: hidden; /* Wichtig für abgerundete Ecken des Bildes */
+        margin-bottom: 10px;
+    }
+    .header-image {
+        width: 100%;
+        height: 120px; /* Höhe des Retro-Bildes */
+        object-fit: cover; /* Bild füllt den Bereich aus */
+        opacity: 0.8; /* Leicht transparent für bessere Lesbarkeit des Textes */
+    }
+    .header-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        width: 100%;
+        font-weight: bold;
+        font-size: 1.6rem;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5); /* Schatten für bessere Lesbarkeit */
+    }
+
+    /* Community-Box */
     .community-box {
         background-color: #f8f9fa;
         border: 1px solid #e0e0e0;
@@ -24,9 +51,8 @@ st.markdown("""
         align-items: center;
         gap: 10px;
     }
-    .report-icon {
-        font-size: 1.2rem;
-    }
+    .report-icon { font-size: 1.2rem; }
+    
     /* Button Styling */
     .stButton>button {
         border-radius: 20px;
@@ -37,11 +63,22 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# Header
-st.markdown('<div style="background:#e2001a;color:white;padding:20px;text-align:center;border-radius:15px;font-weight:bold;font-size:1.6rem;">⛽ WIESMOOR LIVE-RADAR</div>', unsafe_allow_html=True)
+# --- NEUER HEADER MIT RETRO-FOTO ---
+# Wir nutzen hier eine Bild-URL für eine klassische Tankstelle. 
+# Man kann diese URL später gegen ein eigenes Bild austauschen.
+tankstelle_bild_url = "https://images.unsplash.com/photo-1543621429-c7da494d137f?q=80&w=600&auto=format&fit=crop"
+
+st.markdown(f"""
+    <div class="retro-header">
+        <img src="{tankstelle_bild_url}" class="header-image" alt="Klassische Tankstelle">
+        <div class="header-text">WIESMOOR LIVE-RADAR</div>
+    </div>
+""", unsafe_allow_html=True)
 
 # Kurzer, freundlicher Hinweis
 st.caption("Echtzeit-Preise für Wiesmoor & Umgebung. Melde Abweichungen für die Community!")
+
+# --- RESTLICHER CODE (Bleibt gleich) ---
 
 API_KEY = "616cbb8e-9dde-4eb7-91f1-21a1663fa495"
 
@@ -54,7 +91,7 @@ if 'lat' not in st.session_state:
 # 2. BEDIENUNG
 col_a, col_b = st.columns(2)
 with col_a:
-    loc = streamlit_js_eval(js_expressions='navigator.geolocation ? new Promise((resolve) => { navigator.geolocation.getCurrentPosition(pos => resolve({lat: pos.coords.latitude, lon: pos.coords.longitude}), () => resolve(null), {enableHighAccuracy: true}) }) : null', key='gps_final')
+    loc = streamlit_js_eval(js_expressions='navigator.geolocation ? new Promise((resolve) => { navigator.geolocation.getCurrentPosition(pos => resolve({lat: pos.coords.latitude, lon: pos.coords.longitude}), () => resolve(null), {enableHighAccuracy: true}) }) : null', key='gps_final_v2')
     if st.button("📍 Standort"):
         if loc:
             st.session_state.lat, st.session_state.lng = loc['lat'], loc['lon']
@@ -103,10 +140,9 @@ if stations:
                 </div>
                 """, unsafe_allow_html=True)
 
-                # Melde-Bereich (Dezent unter der Karte)
+                # Melde-Bereich
                 c1, c2 = st.columns([1, 1])
                 
-                # Falls eine Meldung vorliegt, zeige sie hübsch an
                 if sid in st.session_state.user_reports:
                     rep = st.session_state.user_reports[sid]
                     st.markdown(f"""
@@ -118,7 +154,6 @@ if stations:
                     if st.button("Foto zeigen", key=f"v_{sid}_{key}"):
                         st.image(rep['img'], use_container_width=True)
 
-                # Melde-Button
                 if c1.button("📸 Preis-Foto senden", key=f"m_{sid}_{key}"):
                     st.session_state[f"up_{sid}"] = True
 
