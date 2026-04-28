@@ -8,7 +8,11 @@ from datetime import datetime
 # 1. SETUP & DESIGN
 st.set_page_config(page_title="Wiesmoor Radar", page_icon="⛽", layout="centered")
 
+# Header
 st.markdown('<div style="background:#e2001a;color:white;padding:20px;text-align:center;border-radius:15px;font-weight:bold;font-size:1.6rem;">⛽ WIESMOOR LIVE-RADAR</div>', unsafe_allow_html=True)
+
+# --- NEU: HINWEIS ZUR PREISABWEICHUNG ---
+st.info("ℹ️ **Hinweis:** Preise können systembedingt um einige Cent abweichen. Maßgeblich ist immer der Preis an der Zapfsäule vor Ort.")
 
 API_KEY = "616cbb8e-9dde-4eb7-91f1-21a1663fa495"
 
@@ -18,7 +22,7 @@ if 'lat' not in st.session_state:
 # 2. BEDIENUNG
 col_a, col_b = st.columns(2)
 with col_a:
-    loc = streamlit_js_eval(js_expressions='navigator.geolocation ? new Promise((resolve) => { navigator.geolocation.getCurrentPosition(pos => resolve({lat: pos.coords.latitude, lon: pos.coords.longitude}), () => resolve(null), {enableHighAccuracy: true}) }) : null', key='gps_final')
+    loc = streamlit_js_eval(js_expressions='navigator.geolocation ? new Promise((resolve) => { navigator.geolocation.getCurrentPosition(pos => resolve({lat: pos.coords.latitude, lon: pos.coords.longitude}), () => resolve(null), {enableHighAccuracy: true}) }) : null', key='gps_final_v2')
     if st.button("📍 Standort finden"):
         if loc:
             st.session_state.lat, st.session_state.lng = loc['lat'], loc['lon']
@@ -39,7 +43,7 @@ def fetch_now(lat, lng):
         return []
 
 stations = fetch_now(st.session_state.lat, st.session_state.lng)
-st.caption(f"Letztes Update: {datetime.now().strftime('%H:%M:%S')} Uhr")
+st.caption(f"Letztes Daten-Update: {datetime.now().strftime('%H:%M:%S')} Uhr")
 
 # 4. ANZEIGE
 if stations:
@@ -48,7 +52,6 @@ if stations:
 
     for i, (label, key) in enumerate(fuels.items()):
         with tabs[i]:
-            # Filtern und Sortieren
             valid_s = [s for s in stations if s.get(key) and s.get(key) > 0]
             valid_s.sort(key=lambda x: (not x.get('isOpen'), x.get(key)))
 
@@ -57,7 +60,6 @@ if stations:
                 isOpen = s.get('isOpen')
                 status_color = "#28a745" if isOpen else "#d9534f"
                 
-                # WICHTIG: Hier waren die Klammern im Fehlerbild
                 st.markdown(f"""
                 <div style="border:1px solid #ddd; padding:15px; margin:10px 0; background:white; border-radius:12px; border-left: 8px solid {status_color};">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -75,9 +77,9 @@ if stations:
 
     with tabs[3]:
         m = folium.Map(location=[st.session_state.lat, st.session_state.lng], zoom_start=13)
-        folium.Marker([st.session_state.lat, st.session_state.lng], tooltip="Du", icon=folium.Icon(color='blue')).add_to(m)
+        folium.Marker([st.session_state.lat, st.session_state.lng], tooltip="Deine Position", icon=folium.Icon(color='blue', icon='user', prefix='fa')).add_to(m)
         for s in stations:
-            folium.Marker([s["lat"], s["lng"]], tooltip=s.get('brand'), icon=folium.Icon(color='red' if s.get('isOpen') else 'gray', icon='gas-pump', prefix='fa')).add_to(m)
-        st_folium(m, width=700, height=500, key="main_map")
+            folium.Marker([s["lat"], s["lng"]], tooltip=str(s.get('brand')), icon=folium.Icon(color='red' if s.get('isOpen') else 'gray', icon='gas-pump', prefix='fa')).add_to(m)
+        st_folium(m, width=700, height=500, key="map_final_v2")
 else:
-    st.error("Konnte keine Daten laden. Bitte Button oben klicken.")
+    st.error("Konnte keine Daten laden. Bitte versuche es in einem Moment erneut.")
