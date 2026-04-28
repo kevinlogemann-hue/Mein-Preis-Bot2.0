@@ -15,7 +15,7 @@ st.markdown("""
         display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 20px;
     }
     .hero-title { color: white; font-size: 2rem; font-weight: 900; margin: 0; }
-    .hero-subtitle { color: #e0e0e0; font-size: 0.85rem; }
+    .hero-subtitle { color: #d1ffcd; font-size: 0.9rem; font-weight: 600; text-align: center; padding: 0 10px; }
 
     .station-card {
         background: white; padding: 16px; border-radius: 20px;
@@ -29,7 +29,7 @@ st.markdown("""
     }
     .price-tag { margin-left: auto; font-size: 1.9rem; font-weight: 900; color: #000; }
 
-    /* Blaues Community-Button Design */
+    /* Freundlicher Blau-Ton für Community-Aktionen */
     div.stButton > button {
         background-color: #f0f7ff !important; color: #007bff !important;
         border: 2px solid #007bff !important; border-radius: 12px !important;
@@ -40,9 +40,15 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<div class="hero-banner"><div class="hero-title">WIESMOOR RADAR</div><div class="hero-subtitle">Sortiere nach Preis oder Entfernung</div></div>', unsafe_allow_html=True)
+# Header mit aktivem Aufruf zur Mithilfe
+st.markdown("""
+<div class="hero-banner">
+    <div class="hero-title">WIESMOOR RADAR</div>
+    <div class="hero-subtitle">Preis falsch? Hilf uns & lade ein Foto hoch! 📸</div>
+</div>
+""", unsafe_allow_html=True)
 
-# 2. STANDORT & FILTER-BAR
+# 2. STANDORT & FILTER
 if 'lat' not in st.session_state:
     st.session_state.lat, st.session_state.lng = 53.414, 7.733
 
@@ -50,7 +56,7 @@ col_gps, col_rad, col_sort = st.columns([1.2, 0.8, 1.5])
 
 with col_gps:
     if st.button("📍 GPS", use_container_width=True):
-        loc = streamlit_js_eval(js_expressions='navigator.geolocation ? new Promise((resolve) => { navigator.geolocation.getCurrentPosition(pos => resolve({lat: pos.coords.latitude, lon: pos.coords.longitude})) }) : null', key='gps_sort_fix')
+        loc = streamlit_js_eval(js_expressions='navigator.geolocation ? new Promise((resolve) => { navigator.geolocation.getCurrentPosition(pos => resolve({lat: pos.coords.latitude, lon: pos.coords.longitude})) }) : null', key='gps_final_v12')
         if loc:
             st.session_state.lat, st.session_state.lng = loc['lat'], loc['lon']
             st.rerun()
@@ -61,7 +67,7 @@ with col_rad:
 with col_sort:
     sort_by = st.selectbox("Sortierung", ["Günstigste zuerst", "Nahgelegene zuerst"])
 
-# 3. DATEN ABARBEITEN
+# 3. DATEN
 API_KEY = "616cbb8e-9dde-4eb7-91f1-21a1663fa495"
 
 @st.cache_data(ttl=60)
@@ -73,22 +79,20 @@ def get_style(brand):
     b = (brand or "").lower()
     if "aral" in b: return {"bg": "#0070BB", "c": "white", "s": "A"}
     if "score" in b: return {"bg": "#FFD100", "c": "#E2001A", "s": "S"}
-    if "behrens" in b: return {"bg": "#5D40 brown", "c": "white", "s": "B"}
+    if "behrens" in b: return {"bg": "#5D4037", "c": "white", "s": "B"}
     return {"bg": "#e9ecef", "c": "#495057", "s": "⛽"}
 
 raw_stations = get_stations(st.session_state.lat, st.session_state.lng, radius)
 
-# 4. ANZEIGE & SORTIER-LOGIK
+# 4. ANZEIGE & COMMUNITY-LOGIK
 if raw_stations:
     tab1, tab2, tab3 = st.tabs(["Super E5", "Super E10", "Diesel"])
     fuels = {"Super E5": "e5", "Super E10": "e10", "Diesel": "diesel"}
 
     for i, (label, fuel_key) in enumerate(fuels.items()):
         with [tab1, tab2, tab3][i]:
-            # Nur Stationen mit Preis für diesen Kraftstoff
             valid_stations = [s for s in raw_stations if s.get(fuel_key)]
             
-            # SORTIERUNG ANWENDEN
             if sort_by == "Günstigste zuerst":
                 sorted_list = sorted(valid_stations, key=lambda x: x.get(fuel_key))
             else:
@@ -112,11 +116,12 @@ if raw_stations:
                 </div>
                 """, unsafe_allow_html=True)
                 
-                if st.button(f"📸 Preis-Foto senden", key=f"up_{s['id']}_{fuel_key}"):
+                # Button mit klarem Appell
+                if st.button(f"📸 Preis nicht korrekt?", key=f"fix_{s['id']}_{fuel_key}"):
                     st.session_state[f"cam_{s['id']}"] = True
                 
                 if st.session_state.get(f"cam_{s['id']}"):
-                    st.info(f"Foto-Upload für {name} aktiviert.")
-                    st.file_uploader("Bild auswählen", type=['jpg', 'png'], key=f"file_{s['id']}")
+                    st.info(f"Mithilfe für {name}: Lade ein Foto der Preistafel hoch, damit wir den Preis korrigieren können!")
+                    st.file_uploader("Foto hochladen", type=['jpg', 'png'], key=f"file_{s['id']}")
 else:
-    st.info("Keine Stationen gefunden.")
+    st.info("Suche Tankstellen...")
