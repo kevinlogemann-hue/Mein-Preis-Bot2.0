@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 from streamlit_js_eval import streamlit_js_eval
 
-# 1. DESIGN-UPDATE FÜR DIE FREUNDLICHE COMMUNITY-AKTION
+# 1. PREMIUM UI-SETUP & FIXES
 st.set_page_config(page_title="Wiesmoor Radar", layout="centered")
 
 st.markdown("""
@@ -22,71 +22,67 @@ st.markdown("""
         justify-content: center;
         margin-bottom: 20px;
         text-align: center;
-        padding: 10px;
     }
     .hero-title {
         color: white;
-        font-size: 2rem;
+        font-size: 2.2rem;
         font-weight: 900;
         margin: 0;
     }
     .hero-subtitle {
         color: #d1ffcd;
         font-size: 0.9rem;
-        font-weight: 400;
-        margin-top: 5px;
     }
 
     /* Tankstellen Karten */
     .station-card {
         background: white;
-        padding: 15px;
-        border-radius: 18px;
+        padding: 16px;
+        border-radius: 20px;
         display: flex;
         align-items: center;
-        border: 1px solid #eee;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.03);
-        margin-bottom: 5px;
+        border: 1px solid #f0f0f0;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+        margin-bottom: 6px;
     }
 
     .brand-logo {
-        width: 50px;
-        height: 50px;
-        border-radius: 12px;
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.4rem;
+        font-size: 1.5rem;
         font-weight: bold;
         flex-shrink: 0;
     }
 
     .price-tag {
         margin-left: auto;
-        font-size: 1.9rem;
+        font-size: 2rem;
         font-weight: 900;
         color: #000;
+        letter-spacing: -1px;
     }
 
-    /* NEUER FREUNDLICHER KORREKTUR-BUTTON (GRÜN) */
+    /* Der freundliche grüne Button */
     div.stButton > button {
-        background-color: #f1fff1 !important; /* Sehr helles Grün */
-        color: #28a745 !important; /* Community-Grün */
+        background-color: #f1fff1 !important;
+        color: #28a745 !important;
         border: 2px solid #28a745 !important;
-        border-radius: 12px !important;
-        padding: 6px 18px !important;
+        border-radius: 14px !important;
+        padding: 4px 16px !important;
         font-size: 0.8rem !important;
-        font-weight: 800 !important;
-        margin-top: -10px !important;
-        margin-bottom: 25px !important;
+        font-weight: 700 !important;
+        margin-top: -12px !important;
+        margin-bottom: 24px !important;
         width: auto !important;
-        transition: all 0.2s ease-in-out;
     }
     
     div.stButton > button:hover {
         background-color: #28a745 !important;
         color: white !important;
-        transform: translateY(-2px);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -95,7 +91,7 @@ st.markdown("""
 st.markdown("""
 <div class="hero-banner">
     <div class="hero-title">WIESMOOR RADAR</div>
-    <div class="hero-subtitle">Hilf der Community: Preis korrigieren!</div>
+    <div class="hero-subtitle">Gemeinsam für echte Preise vor Ort</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -105,16 +101,16 @@ if 'lat' not in st.session_state:
 
 col1, col2 = st.columns([2, 1])
 with col1:
-    if st.button("📍 Meinen Standort finden", use_container_width=True):
-        loc = streamlit_js_eval(js_expressions='navigator.geolocation ? new Promise((resolve) => { navigator.geolocation.getCurrentPosition(pos => resolve({lat: pos.coords.latitude, lon: pos.coords.longitude})) }) : null', key='gps_radar')
+    if st.button("📍 Standort aktualisieren", use_container_width=True):
+        loc = streamlit_js_eval(js_expressions='navigator.geolocation ? new Promise((resolve) => { navigator.geolocation.getCurrentPosition(pos => resolve({lat: pos.coords.latitude, lon: pos.coords.longitude})) }) : null', key='gps_radar_v10')
         if loc:
             st.session_state.lat, st.session_state.lng = loc['lat'], loc['lon']
             st.rerun()
 
 with col2:
-    radius = st.selectbox("Umkreis (km)", [5, 10, 20], index=0)
+    radius = st.selectbox("Umkreis", [5, 10, 20], index=0)
 
-# 3. DATEN
+# 3. DATEN & LOGIK (Namens-Fix inkludiert)
 API_KEY = "616cbb8e-9dde-4eb7-91f1-21a1663fa495"
 
 @st.cache_data(ttl=60)
@@ -125,46 +121,49 @@ def get_stations(la, ln, rad):
     except:
         return []
 
-def get_brand_style(brand):
-    b = brand.lower()
-    if "aral" in b: return {"bg": "#0070BB", "c": "white", "s": "A"}
-    if "score" in b: return {"bg": "#FFD100", "c": "#E2001A", "s": "S"}
-    if "behrens" in b: return {"bg": "#5D4037", "c": "white", "s": "B"}
+def get_brand_style(brand_name):
+    bn = brand_name.lower()
+    if "aral" in bn: return {"bg": "#0070BB", "c": "white", "s": "A"}
+    if "score" in bn: return {"bg": "#FFD100", "c": "#E2001A", "s": "S"}
+    if "behrens" in bn: return {"bg": "#5D4037", "c": "white", "s": "B"}
+    if "jet" in bn: return {"bg": "#FFD200", "c": "#003399", "s": "J"}
+    if "q1" in bn: return {"bg": "white", "c": "#E30613", "s": "Q1"}
     return {"bg": "#455A64", "c": "white", "s": "⛽"}
 
-data = get_stations(st.session_state.lat, st.session_state.lng, radius)
+stations = get_stations(st.session_state.lat, st.session_state.lng, radius)
 
 # 4. ANZEIGE
-if data:
+if stations:
     tabs = st.tabs(["Super E5", "Super E10", "Diesel"])
     fuel_types = {"Super E5": "e5", "Super E10": "e10", "Diesel": "diesel"}
 
     for i, (label, key) in enumerate(fuel_types.items()):
         with tabs[i]:
-            for s in data:
+            for s in stations:
                 price = s.get(key)
                 if price:
-                    ui = get_brand_style(s.get('brand', ''))
+                    # NAMENS-FIX: Falls 'brand' leer ist, nutze 'name' oder 'Freie Tankstelle'
+                    raw_name = s.get('brand') or s.get('name') or "Freie Tankstelle"
+                    display_name = raw_name.upper()
+                    
+                    ui = get_brand_style(raw_name)
+                    
                     st.markdown(f"""
                     <div class="station-card">
-                        <div class="brand-logo" style="background-color: {ui['bg']}; color: {ui['c']};">
+                        <div class="brand-logo" style="background-color: {ui['bg']}; color: {ui['c']}; border: { '2px solid ' + ui['c'] if ui['bg'] == 'white' else 'none' };">
                             {ui['s']}
                         </div>
                         <div style="margin-left: 15px;">
-                            <div style="font-weight: 800; font-size: 1rem;">{s.get('brand').upper()}</div>
-                            <div style="color: #888; font-size: 0.75rem;">{s.get('street')} ({s.get('dist')} km)</div>
+                            <div style="font-weight: 900; font-size: 1.1rem; color: #111;">{display_name}</div>
+                            <div style="color: #888; font-size: 0.8rem;">{s.get('street')} ({s.get('dist')} km)</div>
                         </div>
                         <div class="price-tag">{price:.2f}€</div>
                     </div>
                     """, unsafe_allow_html=True)
                     
-                    # Neuer freundlicher Button für Korrekturen
-                    if st.button(f"📸 Preis korrigieren (Foto)", key=f"fix_{s['id']}_{key}"):
+                    # Der freundliche Foto-Button
+                    if st.button(f"📸 Preis korrigieren (Foto)", key=f"btn_{s['id']}_{key}"):
                         st.session_state[f"cam_{s['id']}"] = True
                     
                     if st.session_state.get(f"cam_{s['id']}"):
-                        with st.container():
-                            st.success("Helfe der Community: Mache ein Foto der Preistafel und wir korrigieren den Preis sofort!")
-                            st.file_uploader("Foto der Preistafel auswählen", type=['jpg', 'jpeg', 'png'], key=f"up_{s['id']}")
-else:
-    st.warning("Keine Tankstellen im gewählten Umkreis gefunden.")
+                        st.info(f"H
