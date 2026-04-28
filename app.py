@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 from streamlit_js_eval import streamlit_js_eval
 
-# 1. PREMIUM UI-SETUP
+# 1. DESIGN-UPDATE FÜR DIE FREUNDLICHE COMMUNITY-AKTION
 st.set_page_config(page_title="Wiesmoor Radar", layout="centered")
 
 st.markdown("""
@@ -31,7 +31,7 @@ st.markdown("""
         margin: 0;
     }
     .hero-subtitle {
-        color: #ffccd1;
+        color: #d1ffcd;
         font-size: 0.9rem;
         font-weight: 400;
         margin-top: 5px;
@@ -68,24 +68,25 @@ st.markdown("""
         color: #000;
     }
 
-    /* Korrektur-Button: "Preis korrigieren" */
+    /* NEUER FREUNDLICHER KORREKTUR-BUTTON (GRÜN) */
     div.stButton > button {
-        background-color: #f8f9fa !important;
-        color: #dc3545 !important;
-        border: 1px dashed #dc3545 !important;
+        background-color: #f1fff1 !important; /* Sehr helles Grün */
+        color: #28a745 !important; /* Community-Grün */
+        border: 2px solid #28a745 !important;
         border-radius: 12px !important;
-        padding: 5px 15px !important;
+        padding: 6px 18px !important;
         font-size: 0.8rem !important;
-        font-weight: 700 !important;
+        font-weight: 800 !important;
         margin-top: -10px !important;
         margin-bottom: 25px !important;
         width: auto !important;
+        transition: all 0.2s ease-in-out;
     }
     
     div.stButton > button:hover {
-        background-color: #dc3545 !important;
+        background-color: #28a745 !important;
         color: white !important;
-        border-style: solid !important;
+        transform: translateY(-2px);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -94,7 +95,7 @@ st.markdown("""
 st.markdown("""
 <div class="hero-banner">
     <div class="hero-title">WIESMOOR RADAR</div>
-    <div class="hero-subtitle">Preis falsch? Melde es der Community!</div>
+    <div class="hero-subtitle">Hilf der Community: Preis korrigieren!</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -111,7 +112,7 @@ with col1:
             st.rerun()
 
 with col2:
-    radius = st.selectbox("Umkreis (km)", [5, 10, 20, 50], index=0)
+    radius = st.selectbox("Umkreis (km)", [5, 10, 20], index=0)
 
 # 3. DATEN
 API_KEY = "616cbb8e-9dde-4eb7-91f1-21a1663fa495"
@@ -157,13 +158,13 @@ if data:
                     </div>
                     """, unsafe_allow_html=True)
                     
-                    # Neuer Button für Korrekturen bei Abweichungen
-                    if st.button(f"⚠ Preis falsch? Korrigieren", key=f"fix_{s['id']}_{key}"):
+                    # Neuer freundlicher Button für Korrekturen
+                    if st.button(f"📸 Preis korrigieren (Foto)", key=f"fix_{s['id']}_{key}"):
                         st.session_state[f"cam_{s['id']}"] = True
                     
                     if st.session_state.get(f"cam_{s['id']}"):
                         with st.container():
-                            st.info("Bitte lade ein Foto der Preistafel hoch. Wir aktualisieren den Preis sofort für alle!")
+                            st.success("Helfe der Community: Mache ein Foto der Preistafel und wir korrigieren den Preis sofort!")
                             st.file_uploader("Foto der Preistafel auswählen", type=['jpg', 'jpeg', 'png'], key=f"up_{s['id']}")
 else:
     st.warning("Keine Tankstellen im gewählten Umkreis gefunden.")
