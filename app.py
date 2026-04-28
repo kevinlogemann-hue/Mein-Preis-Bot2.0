@@ -2,106 +2,161 @@ import streamlit as st
 import requests
 from streamlit_js_eval import streamlit_js_eval
 
-# 1. ULTIMATIVES DESIGN (Filter-System & Premium Icons)
+# 1. PREMIUM UI-SETUP
 st.set_page_config(page_title="Wiesmoor Radar", layout="centered")
 
 st.markdown("""
 <style>
-    /* Das Hauptbanner (Original-Look) */
+    /* Das markante Hauptbanner */
     .hero-banner {
         width: 100%;
         height: 150px;
-        background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), 
+        background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6)), 
                     url('https://images.unsplash.com/photo-1527018601619-a508a2be00cd?q=80&w=1000');
         background-size: cover;
         background-position: center;
-        border-radius: 25px;
+        border-radius: 20px;
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        margin-bottom: 5px;
-        border: 1px solid rgba(255,255,255,0.2);
+        margin-bottom: 15px;
     }
     .hero-title {
         color: white;
-        font-size: 2.2rem;
+        font-size: 2rem;
         font-weight: 900;
-        text-shadow: 2px 2px 10px rgba(0,0,0,0.8);
-    }
-    
-    /* Community Aufruf */
-    .community-box {
-        text-align: center;
-        color: #d32f2f;
-        font-size: 0.85rem;
-        font-weight: 600;
-        margin-bottom: 20px;
-        padding: 5px;
+        letter-spacing: 1px;
     }
 
-    /* Tankstellen Karte */
+    /* Filter & Standort Bereich */
+    .filter-container {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 15px;
+        margin-bottom: 20px;
+    }
+
+    /* Tankstellen Karten */
     .station-card {
         background: white;
-        padding: 18px;
-        border-radius: 22px;
+        padding: 15px;
+        border-radius: 18px;
         display: flex;
         align-items: center;
-        border: 1px solid #f0f0f0;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.04);
-        margin-bottom: 10px;
+        border: 1px solid #eee;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+        margin-bottom: 5px;
     }
 
-    .brand-icon {
-        width: 55px;
-        height: 55px;
-        border-radius: 15px;
+    .brand-logo {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.6rem;
-        font-weight: 900;
+        font-size: 1.4rem;
+        font-weight: bold;
         flex-shrink: 0;
     }
 
-    .price-text {
+    .price-tag {
         margin-left: auto;
-        font-size: 2.1rem;
+        font-size: 1.8rem;
         font-weight: 900;
-        color: #111;
-        letter-spacing: -1px;
+        color: #000;
     }
 
-    /* Neue moderne Foto-Badges */
+    /* Die neuen Foto-Buttons (Modern & Dezent) */
     div.stButton > button {
-        background-color: transparent !important;
-        color: #666 !important;
-        border: 1px solid #ddd !important;
-        border-radius: 20px !important;
-        padding: 2px 12px !important;
-        font-size: 0.7rem !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.5px !important;
-        margin-top: -15px !important;
-        margin-bottom: 15px !important;
-        transition: all 0.3s !important;
+        background-color: #f1f3f5 !important;
+        color: #444 !important;
+        border: none !important;
+        border-radius: 10px !important;
+        padding: 5px 15px !important;
+        font-size: 0.75rem !important;
+        font-weight: 600 !important;
+        margin-top: -10px !important;
+        margin-bottom: 20px !important;
+        width: auto !important;
     }
     
     div.stButton > button:hover {
-        border-color: #e2001a !important;
-        color: #e2001a !important;
-        background-color: #fff1f1 !important;
+        background-color: #e2001a !important;
+        color: white !important;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# --- UI START ---
+# --- APP HEADER ---
 st.markdown('<div class="hero-banner"><div class="hero-title">WIESMOOR RADAR</div></div>', unsafe_allow_html=True)
-st.markdown('<div class="community-box">📸 Bitte Fotos für die Community machen, um Echtheit zu bestätigen!</div>', unsafe_allow_html=True)
 
-# 2. STANDORT-FILTERUNG & SORTIERUNG
-if 'lat' not in st.session_state: st.session_state.lat, st.session_state.lng = 53.414, 7.733
+# 2. FILTER & STANDORT LOGIK
+if 'lat' not in st.session_state:
+    st.session_state.lat, st.session_state.lng = 53.414, 7.733
 
-col1, col2 = st.columns([2, 1])
-with col1:
-    if st.button("📍 ME
+with st.container():
+    st.markdown("### Filter & Standort")
+    col1, col2 = st.columns([2, 1])
+    
+    with col1:
+        if st.button("📍 Standort aktualisieren", use_container_width=True):
+            loc = streamlit_js_eval(js_expressions='navigator.geolocation ? new Promise((resolve) => { navigator.geolocation.getCurrentPosition(pos => resolve({lat: pos.coords.latitude, lon: pos.coords.longitude})) }) : null', key='gps_final')
+            if loc:
+                st.session_state.lat, st.session_state.lng = loc['lat'], loc['lon']
+                st.rerun()
+    
+    with col2:
+        radius = st.selectbox("Umkreis", [5, 10, 20, 50], index=1)
+
+# 3. DATEN ABRUFEN
+API_KEY = "616cbb8e-9dde-4eb7-91f1-21a1663fa495"
+
+@st.cache_data(ttl=60)
+def get_data(la, ln, rad):
+    url = f"https://creativecommons.tankerkoenig.de/json/list.php?lat={la}&lng={ln}&rad={rad}&sort=dist&type=all&apikey={API_KEY}"
+    return requests.get(url).json().get("stations", [])
+
+def get_brand_style(brand):
+    b = brand.lower()
+    if "aral" in b: return {"bg": "#0070BB", "c": "white", "s": "A"}
+    if "score" in b: return {"bg": "#FFD100", "c": "#E2001A", "s": "S"}
+    if "behrens" in b: return {"bg": "#5D4037", "c": "white", "s": "B"}
+    return {"bg": "#eee", "c": "#333", "s": "⛽"}
+
+stations = get_data(st.session_state.lat, st.session_state.lng, radius)
+
+# 4. PREIS-ANZEIGE
+if stations:
+    tab1, tab2, tab3 = st.tabs(["Super E5", "Super E10", "Diesel"])
+    fuel_map = {"Super E5": "e5", "Super E10": "e10", "Diesel": "diesel"}
+
+    for i, (label, key) in enumerate(fuel_map.items()):
+        with [tab1, tab2, tab3][i]:
+            for s in stations:
+                price = s.get(key)
+                if price:
+                    style = get_brand_style(s.get('brand', ''))
+                    
+                    # Karte
+                    st.markdown(f"""
+                    <div class="station-card">
+                        <div class="brand-logo" style="background-color: {style['bg']}; color: {style['c']};">
+                            {style['s']}
+                        </div>
+                        <div style="margin-left: 15px;">
+                            <div style="font-weight: 800; font-size: 1rem;">{s.get('brand').upper()}</div>
+                            <div style="color: #888; font-size: 0.75rem;">{s.get('street')} ({s.get('dist')} km)</div>
+                        </div>
+                        <div class="price-tag">{price:.2f}€</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # Foto-Button
+                    if st.button(f"📷 Beleg senden", key=f"photo_{s['id']}_{key}"):
+                        st.session_state[f"cam_{s['id']}"] = True
+                    
+                    if st.session_state.get(f"cam_{s['id']}"):
+                        st.file_uploader("Foto wählen", type=['jpg', 'png'], key=f"up_{s['id']}")
+else:
+    st.info("Keine Stationen gefunden. Bitte Standort oder Umkreis prüfen.")
