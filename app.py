@@ -29,7 +29,7 @@ st.markdown("""
     }
     .price-tag { margin-left: auto; font-size: 1.9rem; font-weight: 900; color: #000; }
 
-    /* Freundlicher Blau-Ton für Community-Aktionen */
+    /* Buttons */
     div.stButton > button {
         background-color: #f0f7ff !important; color: #007bff !important;
         border: 2px solid #007bff !important; border-radius: 12px !important;
@@ -37,16 +37,15 @@ st.markdown("""
         font-weight: 700 !important; margin-top: -12px !important; margin-bottom: 25px !important;
     }
     div.stButton > button:hover { background-color: #007bff !important; color: white !important; }
+    
+    .missing-hint {
+        background-color: #fff9e6; padding: 10px; border-radius: 10px;
+        border-left: 5px solid #ffcc00; font-size: 0.85rem; margin-top: 20px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
-# Header mit aktivem Aufruf zur Mithilfe
-st.markdown("""
-<div class="hero-banner">
-    <div class="hero-title">WIESMOOR RADAR</div>
-    <div class="hero-subtitle">Preis falsch? Hilf uns & lade ein Foto hoch! 📸</div>
-</div>
-""", unsafe_allow_html=True)
+st.markdown('<div class="hero-banner"><div class="hero-title">WIESMOOR RADAR</div><div class="hero-subtitle">Preis falsch oder Station fehlt? Hilf der Community! 📸</div></div>', unsafe_allow_html=True)
 
 # 2. STANDORT & FILTER
 if 'lat' not in st.session_state:
@@ -56,24 +55,27 @@ col_gps, col_rad, col_sort = st.columns([1.2, 0.8, 1.5])
 
 with col_gps:
     if st.button("📍 GPS", use_container_width=True):
-        loc = streamlit_js_eval(js_expressions='navigator.geolocation ? new Promise((resolve) => { navigator.geolocation.getCurrentPosition(pos => resolve({lat: pos.coords.latitude, lon: pos.coords.longitude})) }) : null', key='gps_final_v12')
+        loc = streamlit_js_eval(js_expressions='navigator.geolocation ? new Promise((resolve) => { navigator.geolocation.getCurrentPosition(pos => resolve({lat: pos.coords.latitude, lon: pos.coords.longitude})) }) : null', key='gps_v13')
         if loc:
             st.session_state.lat, st.session_state.lng = loc['lat'], loc['lon']
             st.rerun()
 
 with col_rad:
-    radius = st.selectbox("km", [5, 10, 20, 50], index=1)
+    radius = st.selectbox("km", [5, 10, 20, 50, 100], index=1)
 
 with col_sort:
     sort_by = st.selectbox("Sortierung", ["Günstigste zuerst", "Nahgelegene zuerst"])
 
-# 3. DATEN
+# 3. DATEN ABARBEITEN
 API_KEY = "616cbb8e-9dde-4eb7-91f1-21a1663fa495"
 
 @st.cache_data(ttl=60)
 def get_stations(la, ln, rad):
     url = f"https://creativecommons.tankerkoenig.de/json/list.php?lat={la}&lng={ln}&rad={rad}&sort=dist&type=all&apikey={API_KEY}"
-    return requests.get(url).json().get("stations", [])
+    try:
+        return requests.get(url).json().get("stations", [])
+    except:
+        return []
 
 def get_style(brand):
     b = (brand or "").lower()
@@ -84,7 +86,7 @@ def get_style(brand):
 
 raw_stations = get_stations(st.session_state.lat, st.session_state.lng, radius)
 
-# 4. ANZEIGE & COMMUNITY-LOGIK
+# 4. ANZEIGE
 if raw_stations:
     tab1, tab2, tab3 = st.tabs(["Super E5", "Super E10", "Diesel"])
     fuels = {"Super E5": "e5", "Super E10": "e10", "Diesel": "diesel"}
@@ -116,12 +118,5 @@ if raw_stations:
                 </div>
                 """, unsafe_allow_html=True)
                 
-                # Button mit klarem Appell
-                if st.button(f"📸 Preis nicht korrekt?", key=f"fix_{s['id']}_{fuel_key}"):
-                    st.session_state[f"cam_{s['id']}"] = True
-                
-                if st.session_state.get(f"cam_{s['id']}"):
-                    st.info(f"Mithilfe für {name}: Lade ein Foto der Preistafel hoch, damit wir den Preis korrigieren können!")
-                    st.file_uploader("Foto hochladen", type=['jpg', 'png'], key=f"file_{s['id']}")
-else:
-    st.info("Suche Tankstellen...")
+                if st.button(f"📸 Preis nicht korrekt?", key=f"err_{s['id']}_{fuel_key}"):
+                    st.session_state[f"cam_{s
