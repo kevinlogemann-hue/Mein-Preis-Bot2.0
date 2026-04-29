@@ -2,77 +2,84 @@ import streamlit as st
 import requests
 from streamlit_js_eval import streamlit_js_eval
 
-# 1. SETUP & TITEL
-st.set_page_config(page_title="Wiesmoor Radar", layout="centered")
+# 1. Grund-Konfiguration
+st.set_page_config(page_title="Wiesmoor Radar")
 
-st.title("⛽ Wiesmoor Radar")
-st.subheader("Preis falsch oder Station fehlt? Hilf uns! 📸")
+st.title("Wiesmoor Radar")
+st.write("Community-Preischeck fuer Tankstellen")
 
-# 2. STANDORT & FILTER
+# 2. Standort-Logik
 if 'lat' not in st.session_state:
-    st.session_state.lat, st.session_state.lng = 53.414, 7.733
+    st.session_state.lat = 53.414
+if 'lng' not in st.session_state:
+    st.session_state.lng = 7.733
 
-# Buttons in Spalten
-col1, col2, col3 = st.columns([1, 1, 1.5])
+def get_location():
+    loc = streamlit_js_eval(js_expressions='navigator.geolocation ? new Promise((resolve) => { navigator.geolocation.getCurrentPosition(pos => resolve({lat: pos.coords.latitude, lon: pos.coords.longitude})) }) : null', key='gps_final')
+    if loc:
+        st.session_state.lat = loc['lat']
+        st.session_state.lng = loc['lng']
 
-with col1:
-    if st.button("📍 GPS finden"):
-        loc = streamlit_js_eval(js_expressions='navigator.geolocation ? new Promise((resolve) => { navigator.geolocation.getCurrentPosition(pos => resolve({lat: pos.coords.latitude, lon: pos.coords.longitude})) }) : null', key='gps_safe')
-        if loc:
-            st.session_state.lat, st.session_state.lng = loc['lat'], loc['lon']
-            st.rerun()
+if st.button("Standort aktualisieren"):
+    get_location()
 
-with col2:
-    radius = st.selectbox("Radius km", [5, 10, 25, 50], index=1)
+# 3. Parameter
+radius = st.slider("Umkreis in km", 1, 50, 10)
+sort_choice = st.radio("Sortierung", ["Preis", "Entfernung"])
 
-with col3:
-    sort_by = st.selectbox("Sortierung", ["Günstigste", "Entfernung"])
-
-# 3. DATEN LADEN
+# 4. API Abfrage
 API_KEY = "616cbb8e-9dde-4eb7-91f1-21a1663fa495"
 
-def fetch_data():
-    url = "https://creativecommons.tankerkoenig.de/json/list.php?lat=" + str(st.session_state.lat) + "&lng=" + str(st.session_state.lng) + "&rad=" + str(radius) + "&sort=dist&type=all&apikey=" + API_KEY
+def load_data():
+    base_url = "https://creativecommons.tankerkoenig.de/json/list.php"
+    params = {
+        "lat": st.session_state.lat,
+        "lng": st.session_state.lng,
+        "rad": radius,
+        "sort": "dist",
+        "type": "all",
+        "apikey": API_KEY
+    }
     try:
-        r = requests.get(url).json()
-        return r.get("stations", [])
+        response = requests.get(base_url, params=params)
+        return response.json().get("stations", [])
     except:
         return []
 
-stations = fetch_data()
+stations = load_data()
 
-# 4. ANZEIGE OHNE HTML-GEFAHR
+# 5. Anzeige der Ergebnisse
 if stations:
     tab1, tab2, tab3 = st.tabs(["Super E5", "Super E10", "Diesel"])
-    fuels = {"Super E5": "e5", "Super E10": "e10", "Diesel": "diesel"}
-
-    fuel_list = [tab1, tab2, tab3]
-    for i, label in enumerate(fuels.keys()):
-        f_key = fuels[label]
-        with fuel_list[i]:
-            # Filterung
-            valid = [s for s in stations if s.get(f_key)]
+    
+    mapping = {"Super E5": "e5", "Super E10": "e10", "Diesel": "diesel"}
+    tabs = [tab1, tab2, tab3]
+    
+    for i, label in enumerate(["Super E5", "Super E10", "Diesel"]):
+        fuel_key = mapping[label]
+        with tabs[i]:
+            # Nur Stationen mit Preis fuer diesen Sprit
+            valid_list = [s for s in stations if s.get(fuel_key)]
             
-            # Sortierung
-            if sort_by == "Günstigste":
-                sorted_list = sorted(valid, key=lambda x: x.get(f_key))
+            # Sortieren
+            if sort_choice == "Preis":
+                sorted_list = sorted(valid_list, key=lambda x: x.get(fuel_key))
             else:
-                sorted_list = sorted(valid, key=lambda x: x.get('dist'))
-
-            for s in sorted_list:
-                price = s.get(f_key)
-                name = str(s.get('brand', s.get('name', 'Tankstelle'))).upper()
-                dist = s.get('dist', 0)
+                sorted_list = sorted(valid_list, key=lambda x: x.get('dist'))
                 
-                # Einfache, stabile Anzeige mit Streamlit-Bordmitteln
-                with st.container():
-                    col_info, col_price = st.columns([3, 1])
-                    col_info.write("**" + name + "**")
-                    col_info.caption(s.get('street', '') + " (" + str(dist) + " km)")
-                    col_price.metric("", str(price) + " €")
+            for s in sorted_list:
+                with st.expander(str(s.get(fuel_key)) + " EUR - " + str(s.get('brand', 'Tankstelle'))):
+                    st.write("Adresse: " + str(s.get('street')) + " " + str(s.get('place')))
+                    st.write("Entfernung: " + str(s.get('dist')) + " km")
                     
-                    # Korrektur-Bereich
-                    if st.button("📸 Preis falsch?", key="btn_" + str(s['id']) + f_key):
-                        st.session_state["cam_" + str(s['id'])] = True
+                    # Foto-Funktion
+                    if st.button("Foto hochladen", key="cam_" + str(s['id']) + fuel_key):
+                        st.session_state["upload_" + str(s['id'])] = True
                     
-                    if st.session_state.get("cam_" +
+                    if st.session_state.get("upload_" + str(s['id'])):
+                        st.file_uploader("Preisschild fotografieren", type=['jpg','png'], key="file_" + str(s['id']))
+else:
+    st.write("Suche läuft... Falls nichts erscheint, bitte Radius erhoehen.")
+
+st.divider()
+st.caption("Datenquelle: Tankerkoenig.de / Markttransparenzstelle")
